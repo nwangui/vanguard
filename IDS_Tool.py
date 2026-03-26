@@ -1,5 +1,21 @@
 #------- PYTHON BASED AI INTRUSION DETECTION SYSTEM USING THE CIC-IDS2017 DATASET --------#
 
+import os
+# Force TensorFlow to use ONLY the CPU and ignore the Mac "Metal" GPU
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+import tensorflow as tf
+
+# This is the "Magic" line for M-series Macs
+tf.compat.v1.disable_eager_execution()
+
+# Strict thread control
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+
+print("🛡️ Vanguard IDS: Initializing in Legacy Graph Mode to bypass macOS Mutex Lock...")
+
 import pandas as pd
 import numpy as np
 import zipfile
@@ -14,17 +30,6 @@ import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import os
-
-# Prevent The Code From Crashing
-# Silence the TensorFlow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0' # Disables specialized CPU optimizations that cause locks
-
-tf.config.set_visible_devices([], 'GPU') # Force CPU-only mode
-
-# 3. Limit the number of threads to prevent the "Lock blocking"
-tf.config.threading.set_intra_op_parallelism_threads(1)
-tf.config.threading.set_inter_op_parallelism_threads(1)
 
 #------ LOADING THE CIC-IDS2017 DATASET -----#
 def load_and_merge_zip(zip_path):
@@ -102,23 +107,23 @@ else:
     print("\n🚀 No existing model found. Starting training...")
     num_classes = len(le.classes_)
 
-input_dim = X_train.shape[1] # Automatically detects your 78 features
+    input_dim = X_train.shape[1] # Automatically detects your 78 features
 
-model = Sequential([
-    Input(shape=(input_dim,)),
-    Dense(64, activation='relu'),        # Hidden Layer 1
-    Dropout(0.2),                        # 20% of neurons shut off randomly to prevent overfitting
-    Dense(32, activation='relu'),        # Hidden Layer 2
-    Dense(num_classes, activation='softmax') # Softmax gives a probability for each of the 15 classes
-])
+    model = Sequential([
+        Input(shape=(input_dim,)),
+        Dense(64, activation='relu'),        # Hidden Layer 1
+        Dropout(0.2),                        # 20% of neurons shut off randomly to prevent overfitting
+        Dense(32, activation='relu'),        # Hidden Layer 2
+        Dense(num_classes, activation='softmax') # Softmax gives a probability for each of the 15 classes
+    ])
 
-# Compile and Train Model
-model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+    # Compile and Train Model
+    model.compile(optimizer='adam',
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
-print("\n--- Starting Keras Training ---")
-model.fit(X_train_scaled, y_train_cat, epochs=20, batch_size=32, validation_split=0.2)
+    print("\n--- Starting Keras Training ---")
+    model.fit(X_train_scaled, y_train_cat, epochs=20, batch_size=32, validation_split=0.2)
 
 # Evaluate the Model
 print("\n--- Model Evaluation ---")
