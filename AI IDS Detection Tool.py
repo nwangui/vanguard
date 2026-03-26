@@ -17,14 +17,14 @@ import os
 
 # Prevent The Code From Crashing
 # Silence the TensorFlow warnings
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0' # Disables specialized CPU optimizations that cause locks
 
 tf.config.set_visible_devices([], 'GPU') # Force CPU-only mode
 
 # 3. Limit the number of threads to prevent the "Lock blocking"
-tf.config.threading.set_intra_op_parallelism_threads(2)
-tf.config.threading.set_inter_op_parallelism_threads(2)
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
 #------ LOADING THE CIC-IDS2017 DATASET -----#
 def load_and_merge_zip(zip_path):
