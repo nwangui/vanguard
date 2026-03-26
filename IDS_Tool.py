@@ -1,57 +1,26 @@
-#------- PYTHON BASED AI INTRUSION DETECTION SYSTEM USING THE CIC-IDS2017 DATASET --------#
+# ------- PYTORCH BASED AI INTRUSION DETECTION SYSTEM (CIC-IDS2017 University of New Brunswick) --------#
 
 import os
-import sys
-
-# Steps Taken To Solve Mac OS Tensorflow Issue
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-
-# Force the specialized "Abseil" library to stop using its buggy mutex
-os.environ['ABSL_LOG_TO_STDERR'] = '1'
-
-import tensorflow as tf
-
-# Disable the GPU plug-in entirely for this run
-tf.config.set_visible_devices([], 'GPU')
-
-# Set thread limits BEFORE any other command
-tf.config.threading.set_intra_op_parallelism_threads(1)
-tf.config.threading.set_inter_op_parallelism_threads(1)
-
-# DO NOT use disable_eager_execution() if you got the libc++abi error
-# Instead, use this to force a single device:
-if tf.config.list_physical_devices('CPU'):
-    try:
-        tf.config.set_logical_device_configuration(
-            tf.config.list_physical_devices('CPU')[0],
-            [tf.config.LogicalDeviceConfiguration()]
-        )
-    except RuntimeError as e:
-        print(e)
-
-print("🛡️ Vanguard IDS: System stabilized for macOS ARM64.")
-
 import pandas as pd
 import numpy as np
 import zipfile
 import joblib
-import seaborn as sns
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Input
-from tensorflow.keras.utils import to_categorical
-import tensorflow as tf
 from sklearn.metrics import classification_report, confusion_matrix
+import seaborn as sns
 import matplotlib.pyplot as plt
-import os
 
-#------ LOADING THE CIC-IDS2017 DATASET -----#
+print("🛡️ Vanguard IDS: Initializing PyTorch Engine...")
+
+# ------ 1. LOADING & PRE-PROCESSING -----#
 def load_and_merge_zip(zip_path):
     all_df = []
-    with zipfile.ZipFile('MachineLearningCSV.zip', 'r') as z:
+    with zipfile.ZipFile(zip_path, 'r') as z:
         for file_name in z.namelist():
             if file_name.endswith('.csv') and not file_name.startswith('__'):
                 print(f"Reading: {file_name}")
@@ -61,158 +30,122 @@ def load_and_merge_zip(zip_path):
 
 
 df = load_and_merge_zip('MachineLearningCSV.zip')
-
-#----- DATA CLEANING & INTEGRATION -----#
-# Remove Trailing Spaces from Column Names
 df.columns = df.columns.str.strip()
-
-# Missing Values & Infinity
 df.replace([np.inf, -np.inf], np.nan, inplace=True)
 df.dropna(inplace=True)
 
-# Label Encoding - To convert text to numbers
 le = LabelEncoder()
 df['Label'] = le.fit_transform(df['Label'])
 
-#----- STRATIFIED SAMPLING -----#
-# Using 20% so as not to overwhelm the machine learning model
 X = df.drop('Label', axis=1)
 y = df['Label']
 
-X_sample, _, y_sample, _ = train_test_split(
-    X, y, test_size=0.5, stratify=y, random_state=42
-)
+# Sampling 50% for performance stability
+X_sample, _, y_sample, _ = train_test_split(X, y, test_size=0.5, stratify=y, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_sample, y_sample, test_size=0.2, random_state=42)
 
-# DATA SPLIT - TRAIN AND TEST
-X_train, X_test, y_train, y_test = train_test_split(
-    X_sample, y_sample, test_size=0.2, random_state=42
-)
-
-# STANDARD SCALER
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# One-Hot Encoding for Keras
+# Convert to PyTorch Tensors
+X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32)
+y_train_tensor = torch.tensor(y_train.values, dtype=torch.long)
+X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32)
+y_test_tensor = torch.tensor(y_test.values, dtype=torch.long)
+
+# Create DataLoader for Batch Training
+train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_size=64, shuffle=True)
+
+
+# ------ NEURAL NETWORK ARCHITECTURE (PYTORCH) -----#
+class IDSNetwork(nn.Module):
+    def __init__(self, input_dim, num_classes):
+        super(IDSNetwork, self).__init__()
+        self.fc1 = nn.Linear(input_dim, 64)
+        self.dropout = nn.Dropout(0.2)
+        self.fc2 = nn.Linear(64, 32)
+        self.output = nn.Linear(32, num_classes)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.relu(self.fc2(x))
+        return self.output(x)  # CrossEntropyLoss handles the Softmax internally
+
+
+input_dim = X_train_scaled.shape[1]
 num_classes = len(le.classes_)
-y_train_cat = to_categorical(y_train, num_classes=num_classes)
-y_test_cat = to_categorical(y_test, num_classes=num_classes)
+model = IDSNetwork(input_dim, num_classes)
 
-print("Pre-processing Complete.")
-print(f"Final Training Shape: {X_train_scaled.shape}")
+# ------ TRAINING THE DATASET -----#
+model_path = 'models/ids_pytorch_model.pth'
 
-
-#------- DEEP NEURAL NETWORK (MLP) TRAINING --------#
-
-# Define paths for your assets
-model_path = 'models/ids_keras_model.h5'
-scaler_path = 'models/scaler.pkl'
-encoder_path = 'models/label_encoder.pkl'
-
-# Initialize model as None (In order to avoid confusing the system)
-model = None
-
-#Check if we already have a trained model to avoid repeating work
-if os.path.exists(model_path) and os.path.exists(scaler_path) and os.path.exists(encoder_path):
-    print("\n✅ Existing model assets found. Loading...")
-    model = tf.keras.models.load_model(model_path)
-    scaler = joblib.load(scaler_path)
-    le = joblib.load(encoder_path)
-    num_classes = len(le.classes_)
-
+if os.path.exists(model_path):
+    print("✅ Loading existing PyTorch model...")
+    model.load_state_dict(torch.load(model_path))
 else:
-    print("\n🚀 No existing model found. Starting training...")
-    num_classes = len(le.classes_)
+    print("🚀 No model found. Starting training...")
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    input_dim = X_train.shape[1] # Automatically detects your 78 features
+    epochs = 10
+    model.train()
+    for epoch in range(epochs):
+        running_loss = 0.0
+        for batch_x, batch_y in train_loader:
+            optimizer.zero_grad()
+            outputs = model(batch_x)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        print(f"Epoch {epoch + 1}/{epochs} - Loss: {running_loss / len(train_loader):.4f}")
 
-    model = Sequential([
-        Input(shape=(input_dim,)),
-        Dense(64, activation='relu'),        # Hidden Layer 1
-        Dropout(0.2),                        # 20% of neurons shut off randomly to prevent overfitting
-        Dense(32, activation='relu'),        # Hidden Layer 2
-        Dense(num_classes, activation='softmax') # Softmax gives a probability for each of the 15 classes
-    ])
+    # Save the Scaler and LabelEncoder (Using Joblib)
+    if not os.path.exists('models'): os.makedirs('models')
+    torch.save(model.state_dict(), model_path)
+    joblib.dump(scaler, 'models/scaler.pkl')
+    joblib.dump(le, 'models/label_encoder.pkl')
 
-    # Compile and Train Model
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+# ------ EVALUATION & PREDICTION -----#
+model.eval()
+with torch.no_grad():
+    test_outputs = model(X_test_tensor)
+    y_pred = torch.argmax(test_outputs, dim=1).numpy()
 
-    print("\n--- Starting Keras Training ---")
-    model.fit(X_train_scaled, y_train_cat, epochs=20, batch_size=32, validation_split=0.2)
-
-# Evaluate the Model
-print("\n--- Model Evaluation ---")
-
-
-# Model Prediction
-print("\n--- Generating Predictions ---")
-y_probs = model.predict(X_test_scaled)
-
-# Convert Probabilities to Class Indices - To find the highest probability
-y_pred = np.argmax(y_probs, axis=1)
-
-# Display labels only in the train set
-present_classes = np.unique(y_test)
-target_names = le.inverse_transform(present_classes)
-
-# Classification Report
-print("\n--- IDS CLASSIFICATION REPORT (KERAS) ---")
+print("\n--- IDS CLASSIFICATION REPORT (PYTORCH) ---")
 print(classification_report(
     y_test,
     y_pred,
-    labels=present_classes,
-    target_names=target_names
+    target_names=le.classes_,
+    zero_division=0  # This tells it to just show '0' instead of a warning
 ))
 
+# ------ CONFUSION MATRIX -----#
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(12, 8))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=le.classes_, yticklabels=le.classes_)
+plt.title('PyTorch IDS: Confusion Matrix')
+plt.ylabel('Actual')
+plt.xlabel('Predicted')
+plt.savefig('ids_confusion_matrix_pytorch.png')
+plt.show()
 
-# Create a directory for the deep neural network model
+# ------ ASSET EXPORT FOR GITHUB ------ #
+print("\n📦 Exporting final assets for deployment...")
+
 if not os.path.exists('models'):
     os.makedirs('models')
 
-# Save the Keras model (Architecture + Weights + Optimizer state) - The .h5 format which is the standard for Keras
-model.save('models/ids_keras_model.h5')
-
-# Save the Scaler and LabelEncoder (Using Joblib)
+# Save the Scaler (Pre-processing brain)
 joblib.dump(scaler, 'models/scaler.pkl')
+
+# Save the Label Encoder (Classification brain)
 joblib.dump(le, 'models/label_encoder.pkl')
 
-print("--- All Assets Saved Successfully ---")
-print("Files created: ids_keras_model.h5, scaler.pkl, label_encoder.pkl")
+# Save the PyTorch Model (Neural brain)
+torch.save(model.state_dict(), 'models/ids_pytorch_model.pth')
 
-#----- CONFUSION MATRIX -----#
-
-def plot_keras_confusion_matrix(trained_model, x_val, y_val, label_enc):
-    """
-    Plots a heatmap for the IDS performance.
-    'trained_model' is your Keras .h5 model.
-    'x_val' is your X_test_scaled data.
-    """
-    # Generate probabilities
-    predictions_probs = trained_model.predict(x_val)
-
-    # Convert to class indices
-    predictions_classes = np.argmax(predictions_probs, axis=1)
-
-    # Create the matrix
-    cm = confusion_matrix(y_val, predictions_classes)
-
-    plt.figure(figsize=(14, 10))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=label_enc.classes_,
-                yticklabels=label_enc.classes_)
-
-    plt.title('Deep Learning IDS: Confusion Matrix')
-    plt.ylabel('Actual Label')
-    plt.xlabel('AI Prediction')
-    plt.tight_layout()
-    plt.show()
-
-# Save the plot
-    plt.savefig('ids_confusion_matrix.png')
-    plt.show()
-
-# Call the function
-plot_keras_confusion_matrix(model, X_test_scaled, y_test, le)
-
+print("✅ Assets verified: models/scaler.pkl, models/label_encoder.pkl, models/ids_pytorch_model.pth")
