@@ -1,20 +1,37 @@
 #------- PYTHON BASED AI INTRUSION DETECTION SYSTEM USING THE CIC-IDS2017 DATASET --------#
 
 import os
-# Force TensorFlow to use ONLY the CPU and ignore the Mac "Metal" GPU
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+import sys
+
+# Steps Taken To Solve Mac OS Tensorflow Issue
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
+# Force the specialized "Abseil" library to stop using its buggy mutex
+os.environ['ABSL_LOG_TO_STDERR'] = '1'
 
 import tensorflow as tf
 
-# This is the "Magic" line for M-series Macs
-tf.compat.v1.disable_eager_execution()
+# Disable the GPU plug-in entirely for this run
+tf.config.set_visible_devices([], 'GPU')
 
-# Strict thread control
+# Set thread limits BEFORE any other command
 tf.config.threading.set_intra_op_parallelism_threads(1)
 tf.config.threading.set_inter_op_parallelism_threads(1)
 
-print("🛡️ Vanguard IDS: Initializing in Legacy Graph Mode to bypass macOS Mutex Lock...")
+# DO NOT use disable_eager_execution() if you got the libc++abi error
+# Instead, use this to force a single device:
+if tf.config.list_physical_devices('CPU'):
+    try:
+        tf.config.set_logical_device_configuration(
+            tf.config.list_physical_devices('CPU')[0],
+            [tf.config.LogicalDeviceConfiguration()]
+        )
+    except RuntimeError as e:
+        print(e)
+
+print("🛡️ Vanguard IDS: System stabilized for macOS ARM64.")
 
 import pandas as pd
 import numpy as np
