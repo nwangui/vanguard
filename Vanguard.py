@@ -76,6 +76,19 @@ if uploaded_file is not None:
                     f"Feature mismatch! Expected {model.input_shape[1]} features, but got {features.shape[1]}. Check your CSV format.")
                 st.stop()
 
+            # Replace any 'inf' or '-inf' with NaN
+            features.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+            # Fill those NaNs (and any other missing values) with 0
+            # (Or use features.median() if you want to be more precise)
+            features.fillna(0, inplace=True)
+
+            # Clip extreme values to prevent 'float64' overflow
+            # (This caps values at a very high number instead of infinity)
+            features = features.clip(lower=-1e15, upper=1e15)
+
+            # --- NOW RUN THE SCALER ---
+            scaled_data = scaler.transform(features)
             # 2. Scaling
             scaled_data = scaler.transform(features)
 

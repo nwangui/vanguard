@@ -82,6 +82,26 @@ print(f"Final Training Shape: {X_train_scaled.shape}")
 
 #------- DEEP NEURAL NETWORK (MLP) TRAINING --------#
 
+# Define paths for your assets
+model_path = 'models/ids_keras_model.h5'
+scaler_path = 'models/scaler.pkl'
+encoder_path = 'models/label_encoder.pkl'
+
+# Initialize model as None (In order to avoid confusing the system)
+model = None
+
+#Check if we already have a trained model to avoid repeating work
+if os.path.exists(model_path) and os.path.exists(scaler_path) and os.path.exists(encoder_path):
+    print("\n✅ Existing model assets found. Loading...")
+    model = tf.keras.models.load_model(model_path)
+    scaler = joblib.load(scaler_path)
+    le = joblib.load(encoder_path)
+    num_classes = len(le.classes_)
+
+else:
+    print("\n🚀 No existing model found. Starting training...")
+    num_classes = len(le.classes_)
+
 input_dim = X_train.shape[1] # Automatically detects your 78 features
 
 model = Sequential([
