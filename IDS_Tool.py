@@ -12,6 +12,8 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import roc_auc_score, roc_curve, auc
+from sklearn.preprocessing import label_binarize
 import seaborn as sns
 import matplotlib.pyplot as plt
 
@@ -62,11 +64,11 @@ train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_s
 class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
         super(IDSNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)
-        self.dropout = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(input_dim, 64) # The input layer takes the 78 features and passes them to 64 neurons.
+        self.dropout = nn.Dropout(0.5) # 0.5 to prevent overfitting
         self.fc2 = nn.Linear(64, 32)
-        self.output = nn.Linear(32, num_classes)
-        self.relu = nn.ReLU()
+        self.output = nn.Linear(32, num_classes) # The output layer provides 15 final scores for each possible attack type in the dataset.
+        self.relu = nn.ReLU() # Decides which information is important enough to pass forward.
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
@@ -123,6 +125,55 @@ print(classification_report(
     zero_division=0  # This tells it to just show '0' instead of a warning
 ))
 
+# Get probabilities instead of just the class prediction
+model.eval()
+with torch.no_grad():
+    logits = model(X_test_tensor)
+    # Apply softmax to get probabilities for each class
+    y_probs = torch.softmax(logits, dim=1).numpy()
+
+# Binarize the output for Multi-class ROC - This converts labels like [0, 1, 2] into [[1,0,0], [0,1,0], [0,0,1]]
+y_test_binarized = label_binarize(y_test, classes=range(num_classes))
+
+# Calculate the Macro-Average AUC-ROC - 'macro' treats all classes equally, which is great for finding rare attacks
+roc_auc_macro = roc_auc_score(y_test_binarized, y_probs, multi_class='ovr', average='macro')
+
+print(f"\n🏆 Overall AUC-ROC Score: {roc_auc_macro:.4f}")
+
+plt.figure(figsize=(12, 8))
+
+# 1. Get all class counts
+all_class_counts = pd.Series(y_test).value_counts()
+
+# 2. Find the index for 'BENIGN' and remove it from our plotting list
+benign_idx = list(le.classes_).index('BENIGN')
+attack_counts = all_class_counts.drop(index=benign_idx, errors='ignore')
+
+# 3. Pick the Top 5 remaining actual attack classes
+top_5_attack_indices = attack_counts.head(5).index.tolist()
+
+# 4. Plotting the ROC Curves for Attacks
+for i in top_5_attack_indices:
+    fpr, tpr, _ = roc_curve(y_test_binarized[:, i], y_probs[:, i])
+    roc_auc = auc(fpr, tpr)
+
+    class_name = le.classes_[i]
+    plt.plot(fpr, tpr, lw=2.5, label=f'Attack: {class_name} (AUC = {roc_auc:.4f})')
+
+# 5. Formatting for your Thesis
+plt.plot([0, 1], [0, 1], 'k--', lw=1.5, label='Random Guess')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate (FPR)')
+plt.ylabel('True Positive Rate (TPR)')
+plt.title('Vanguard IDS: ROC Analysis of Top 5 Malicious Threats')
+plt.legend(loc='lower right', fontsize='medium')
+plt.grid(alpha=0.3)
+
+# 6. Save high-res version
+plt.savefig('vanguard_roc_attacks_only.png', dpi=300)
+plt.show()
+
 # ------ CONFUSION MATRIX -----#
 cm = confusion_matrix(y_test, y_pred)
 plt.figure(figsize=(12, 8))
@@ -133,19 +184,32 @@ plt.xlabel('Predicted')
 plt.savefig('ids_confusion_matrix_pytorch.png')
 plt.show()
 
-# ------ ASSET EXPORT FOR GITHUB ------ #
-print("\n📦 Exporting final assets for deployment...")
 
-if not os.path.exists('models'):
-    os.makedirs('models')
+#----- RANDOM FOREST AI INTRUSION DETECTION SYSTEM (CIC-IDS2017 University of New Brunswick) -----#
 
-# Save the Scaler (Pre-processing brain)
-joblib.dump(scaler, 'models/scaler.pkl')
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-# Save the Label Encoder (Classification brain)
-joblib.dump(le, 'models/label_encoder.pkl')
+# Load thr pre-processed data (Assuming X_train_scaled, y_train are ready)
 
-# Save the PyTorch Model (Neural brain)
-torch.save(model.state_dict(), 'models/ids_pytorch_model.pth')
+print("🌲 Initializing Constrained Random Forest...")
 
-print("✅ Assets verified: models/scaler.pkl, models/label_encoder.pkl, models/ids_pytorch_model.pth")
+# Limit max_depth to 3 to prevent overfitting or data leakage
+rf_model = RandomForestClassifier(
+    n_estimators=50,
+    max_depth=3,
+    random_state=42,
+    class_weight='balanced'
+)
+
+# Train the Model
+rf_model.fit(X_train_scaled, y_train)
+
+# Evaluate the Model
+rf_preds = rf_model.predict(X_test_scaled)
+rf_acc = accuracy_score(y_test, rf_preds)
+
+print(f"📊 Random Forest Accuracy: {rf_acc:.4f}")
+print("\n--- RF Classification Report ---")
+print(classification_report(y_test, rf_preds))

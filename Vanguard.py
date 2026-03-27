@@ -15,10 +15,10 @@ MAX_ROWS = 5000 if IS_CLOUD else None
 # --- 2. PAGE CONFIGURATION ---
 st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide")
 
-st.title("🛡️ Vanguard: AI-Driven Intrusion Detection")
+st.title("🛡️ Vanguard: AI-Intrusion Detection System")
 st.markdown(f"""
 **Status:** {"☁️ Cloud Mode (Optimized)" if IS_CLOUD else "💻 Local Mode (Full)"}  
-This system analyzes network traffic for emerging threats using a **PyTorch Deep Learning** engine.
+This intrusion detection tool analyzes network traffic for threats using **PyTorch Deep Learning** engine.
 """)
 
 
@@ -43,33 +43,38 @@ class IDSNetwork(nn.Module):
 # --- 4. LOAD ASSETS (WITH CACHING) ---
 @st.cache_resource
 def load_vanguard_assets():
-    model_path = 'models/ids_pytorch_model.pth'
     scaler_path = 'models/scaler.pkl'
     encoder_path = 'models/label_encoder.pkl'
+    active_model_info = 'models/active_model_type.txt'
 
-    # Load Scaler and Label Encoder
+    # 1. Load the Universal Assets (Scaler and Labels)
     scaler = joblib.load(scaler_path)
     le = joblib.load(encoder_path)
 
-    # Initialize PyTorch Model
-    input_dim = 78  # CIC-IDS2017 standard features
-    num_classes = len(le.classes_)
-    model = IDSNetwork(input_dim, num_classes)
+    # 2. Check which model was saved as the "Winner"
+    with open(active_model_info, 'r') as f:
+        model_type = f.read().strip()
 
-    # Load weights (map_location='cpu' ensures it works on Cloud/Mac regardless of GPU)
-    model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    model.eval()  # Set to evaluation mode
+    # 3. Dynamic Loading based on the Model Type
+    if model_type == 'sklearn':
+        # Load the Random Forest (.pkl)
+        model = joblib.load('models/vanguard_model.pkl')
+        is_pytorch = False
+    else:
+        # Load the PyTorch Model (.pth)
+        input_dim = 78
+        num_classes = len(le.classes_)
+        model = IDSNetwork(input_dim, num_classes)
+        model.load_state_dict(torch.load('models/vanguard_model.pth', map_location=torch.device('cpu')))
+        model.eval()
+        is_pytorch = True
 
-    return model, scaler, le
+    return model, scaler, le, is_pytorch
 
-
-with st.spinner("Initializing AI Engine..."):
-    try:
-        model, scaler, le = load_vanguard_assets()
-        st.sidebar.success("✅ PyTorch Engine Loaded Successfully")
-    except Exception as e:
-        st.sidebar.error(f"❌ Error loading model: {e}")
-        st.stop()
+# Initialize the assets
+with st.spinner("Vanguard is selecting the optimal engine..."):
+    model, scaler, le, is_pytorch = load_vanguard_assets()
+    st.sidebar.success(f"✅ Active Engine: {('PyTorch' if is_pytorch else 'Random Forest')}")
 
 # --- 5. USER INTERFACE ---
 st.sidebar.header("Upload Traffic Data")
@@ -86,10 +91,10 @@ if uploaded_file is not None:
         df = df_chunk
         st.success(f"✅ Analyzing {len(df)} rows.")
 
-    st.subheader("📊 Ingress Traffic Preview")
+    st.subheader("📊 Traffic Preview")
     st.dataframe(df.head(10))
 
-    if st.button("🔍 Run Threat Analysis"):
+    if st.button("🔍 Run Traffic Analysis for malicious traffic"):
         with st.spinner("Vanguard is scanning for anomalies..."):
             # Data Cleaning
             features = df.drop(columns=['Label'], errors='ignore')
@@ -105,11 +110,17 @@ if uploaded_file is not None:
 
             # Preprocessing & Prediction
             scaled_data = scaler.transform(features)
-            input_tensor = torch.tensor(scaled_data, dtype=torch.float32)
 
-            with torch.no_grad():
-                outputs = model(input_tensor)
-                pred_classes = torch.argmax(outputs, dim=1).numpy()
+            if is_pytorch:
+                # Logic for PyTorch
+                input_tensor = torch.tensor(scaled_data, dtype=torch.float32)
+                with torch.no_grad():
+                    outputs = model(input_tensor)
+                    pred_classes = torch.argmax(outputs, dim=1).numpy()
+            else:
+                # Logic for Random Forest (Sklearn)
+                # It uses the scaled_data (numpy array) directly
+                pred_classes = model.predict(scaled_data)
 
             # Mapping
             df['Prediction'] = pred_classes
@@ -125,16 +136,28 @@ if uploaded_file is not None:
                 st.write(df['Threat_Type'].value_counts())
 
             with col2:
-                st.write("#### Visual Distribution")
+                st.write("#### Attack Visual Distribution")
+
+                # Get the value counts of all detections
+                all_counts = df['Threat_Type'].value_counts()
+
+                # Filter out 'BENIGN' so the chart displays malicious traffic only
+                attack_counts = all_counts.drop(labels=['BENIGN'], errors='ignore')
+
+                # Check if there are is any malicious attack
+                if not attack_counts.empty:
+                    st.bar_chart(attack_counts)
+                else:
+                    st.info("No malicious traffic to visualize.")
                 st.bar_chart(df['Threat_Type'].value_counts())
 
             # Highlight only Threats
             threats_only = df[df['Threat_Type'] != 'BENIGN']
             if not threats_only.empty:
-                st.error(f"🔥 Alert: {len(threats_only)} malicious activities detected!")
+                st.error(f"🔥 Alert: {len(threats_only)} malicious traffic detected!")
                 st.dataframe(threats_only)
             else:
-                st.success("✅ No threats detected in this traffic sample.")
+                st.success("✅ No threats detected in this traffic log.")
 
 else:
     st.info("Please upload a network traffic CSV file in the sidebar to begin.")
