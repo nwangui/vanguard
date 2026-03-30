@@ -19,7 +19,19 @@ import matplotlib.pyplot as plt
 
 print("🛡️ Vanguard IDS: Initializing PyTorch Engine...")
 
-# ------ 1. LOADING & PRE-PROCESSING -----#
+# --- THREAT INTELLIGENCE MAPPING ---#
+CVE_INTEL_MAP = {
+    'DoS': 'CVE-2023-44487 (HTTP/2 Rapid Reset)',
+    'PortScan': 'Reconnaissance / Network Enumeration',
+    'Brute Force': 'CVE-2020-3580 (Cisco ASA Auth Bypass)',
+    'Infiltration': 'CVE-2021-44228 (Log4Shell RCE)',
+    'Web Attack': 'CVE-2022-22965 (Spring4Shell)',
+    'Botnet': 'CVE-2016-10372 (Mirai Variant)',
+    'FTP-Patator': 'Protocol Brute Force (FTP)',
+    'SSH-Patator': 'Protocol Brute Force (SSH)'
+}
+
+# ------ LOADING & PRE-PROCESSING -----#
 def load_and_merge_zip(zip_path):
     all_df = []
     with zipfile.ZipFile(zip_path, 'r') as z:

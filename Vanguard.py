@@ -9,6 +9,58 @@ import torch
 import torch.nn as nn
 
 
+# --- THREAT INTELLIGENCE BASE: CIC-IDS2017 to CVE MAPPING ---
+CVE_INTEL_BASE = {
+    'DoS': {
+        'cve': 'CVE-2023-44487',
+        'name': 'HTTP/2 Rapid Reset',
+        'severity': 7.5,
+        'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion (Denial of Service).'
+    },
+    'PortScan': {
+        'cve': 'N/A (Reconnaissance)',
+        'name': 'Network Enumeration',
+        'severity': 3.3,
+        'description': 'Identifying active ports and services. Often the precursor to an exploit like CVE-2021-41773 (Apache Path Traversal).'
+    },
+    'Brute Force': {
+        'cve': 'CVE-2020-3580',
+        'name': 'Cisco ASA Auth Bypass',
+        'severity': 6.1,
+        'description': 'Attempting to gain unauthorized access via credential stuffing or password guessing on administrative interfaces.'
+    },
+    'Infiltration': {
+        'cve': 'CVE-2021-44228',
+        'name': 'Log4Shell (RCE)',
+        'severity': 10.0,
+        'description': 'Remote Code Execution (RCE) via Log4j logging. One of the most critical infiltration vulnerabilities in history.'
+    },
+    'Web Attack': {
+        'cve': 'CVE-2022-22965',
+        'name': 'Spring4Shell',
+        'severity': 9.8,
+        'description': 'Remote Code Execution in Spring Framework via data binding, typically targeting web-facing applications.'
+    },
+    'Botnet': {
+        'cve': 'CVE-2016-10372',
+        'name': 'Mirai Variant',
+        'severity': 7.3,
+        'description': 'Infecting IoT devices to create a distributed network for large-scale DDoS attacks.'
+    },
+    'FTP-Patator': {
+        'cve': 'Common Protocol Weakness',
+        'name': 'Protocol Brute Force',
+        'severity': 5.3,
+        'description': 'Exploiting weak authentication on file transfer and remote shell protocols.'
+    },
+    'SSH-Patator': {
+        'cve': 'Common Protocol Weakness',
+        'name': 'Protocol Brute Force',
+        'severity': 5.3,
+        'description': 'Exploiting weak authentication on file transfer and remote shell protocols.'
+    }
+}
+
 # --- SESSION STATE INITIALIZATION ---#
 # This must be near the top to ensure the "Vault" exists before the app runs
 if 'analysis_results' not in st.session_state:
@@ -25,7 +77,7 @@ st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide"
 st.title("🛡️ Vanguard: AI-Intrusion Detection System")
 st.markdown(f"""
 **Status:** {"☁️ Cloud Mode (Optimized)" if IS_CLOUD else "💻 Local Mode (Full)"}  
-This framework dynamically selects the most robust engine (PyTorch or Random Forest) to mitigate **overfitting** and detect network anomalies.
+This framework dynamically selects the most robust engine (PyTorch or Random Forest) to mitigate overfitting and detect known and unknown network anomalies.
 """)
 
 
@@ -159,19 +211,64 @@ if st.session_state.analysis_results is not None:
         else:
             st.success("No malicious patterns detected in the network traffic logs.")
 
-        # Alerting Logic
-        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
-        if not malicious_df.empty:
-            st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
-            st.dataframe(malicious_df)
-        else:
-            st.balloons()
-            st.success("✅ System Status: Secure. All traffic identified as Benign.")
+    st.markdown("---")
+    col3, col4 = st.columns([1, 2])
 
-        # Add a clear button for your demo
-        if st.button("🗑️ Clear Results"):
-            st.session_state.analysis_results = None
-            st.rerun()
+    with col3:
+        st.write("#### ⚖️ Risk Prioritization")
+        # Logic to map unique threats to their CVSS scores
+        unique_malicious = [t for t in res_df['Threat_Type'].unique() if t != 'BENIGN']
+
+        severity_data = []
+        for threat in unique_malicious:
+            score = CVE_INTEL_BASE.get(threat, {}).get('severity', 0)
+            severity_data.append({'Threat': threat, 'CVSS Score': score})
+
+        if severity_data:
+            sev_df = pd.DataFrame(severity_data).sort_values(by='CVSS Score', ascending=False)
+            st.dataframe(sev_df.set_index('Threat'))
+        else:
+            st.write("No threats to prioritize.")
+
+    with col4:
+        st.write("#### 🛡️ Severity Ranking (CVSS 3.1)")
+        if severity_data:
+            # Displaying the severity as a horizontal bar chart for clarity
+            st.bar_chart(data=sev_df, x='Threat', y='CVSS Score', color='#ff4b4b')
+        else:
+            st.info("Awaiting threat data for risk visualization.")
+
+    # Alerting Logic
+    st.markdown("---")
+    st.write("### 🧠 Threat Intelligence (CVE Mapping)")
+
+    malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
+    if not malicious_df.empty:
+        unique_threats = malicious_df['Threat_Type'].unique()
+
+        for threat in unique_threats:
+            intel = CVE_INTEL_BASE.get(threat, None)
+            if intel:
+                with st.expander(f"🔍 Forensic Analysis: {threat} ({intel['cve']})"):
+                    c_left, c_right = st.columns([3, 1])
+                    with c_left:
+                        st.write(f"**Vuln Name:** {intel['name']}")
+                        st.write(f"**Description:** {intel['description']}")
+                    with c_right:
+                        st.metric(label="Risk Level", value=f"{intel['severity']}/10")
+
+                    st.warning( f"**Action Plan:** {intel.get('action', 'Monitor traffic logs and restrict source IP.')}")
+
+        st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
+        st.dataframe(malicious_df)
+    else:
+        st.balloons()
+        st.success("✅ System Status: Secure. All traffic identified as Benign.")
+
+    # Add a clear button for your demo
+    if st.button("🗑️ Clear Results"):
+        st.session_state.analysis_results = None
+        st.rerun()
 else:
     st.info("Awaiting input: Upload a network traffic CSV file to begin analysis.")
 
