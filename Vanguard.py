@@ -134,12 +134,20 @@ if uploaded_file is not None:
                 st.write(df['Threat_Type'].value_counts())
 
             with col2:
-                st.write("#### Malicious Traffic Distribution")
-                attack_only = df[df['Threat_Type'] != 'BENIGN']['Threat_Type'].value_counts()
-                if not attack_only.empty:
+                st.write("#### Attack Visual Distribution")
+
+                # Get the value counts of all detections
+                all_counts = df['Threat_Type'].value_counts()
+
+                # Filter out 'BENIGN' so the chart displays malicious traffic only
+                # We name this 'attack_counts' so the next line can find it
+                attack_counts = all_counts.drop(labels=['BENIGN'], errors='ignore')
+
+                # Check if there is any malicious traffic to show
+                if not attack_counts.empty:
                     st.bar_chart(attack_counts)
                 else:
-                    st.success("No malicious patterns detected in the network traffic logs.")
+                    st.info("No malicious traffic to visualize.")
 
             # Alerting Logic
             malicious_df = df[df['Threat_Type'] != 'BENIGN']
