@@ -8,11 +8,18 @@ import os
 import torch
 import torch.nn as nn
 
-# --- 1. CLOUD OPTIMIZATION CHECK ---
+
+# --- SESSION STATE INITIALIZATION ---#
+# This must be near the top to ensure the "Vault" exists before the app runs
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = None
+
+
+# --- CLOUD OPTIMIZATION CHECK --- #
 IS_CLOUD = os.environ.get('RENDER') == 'true'
 MAX_ROWS = 5000 if IS_CLOUD else None
 
-# --- 2. PAGE CONFIGURATION ---
+# --- PAGE CONFIGURATION --- #
 st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ Vanguard: AI-Intrusion Detection System")
@@ -22,7 +29,7 @@ This framework dynamically selects the most robust engine (PyTorch or Random For
 """)
 
 
-# --- 3. UPDATED PYTORCH ARCHITECTURE ---
+# --- PYTORCH ARCHITECTURE ---#
 # Matches the IDS_Tool.py changes (Dropout 0.6)
 class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
@@ -40,7 +47,7 @@ class IDSNetwork(nn.Module):
         return self.output(x)
 
 
-# --- 4. DYNAMIC ASSET LOADING ---
+# --- ENGINE ASSET LOADING --- #
 @st.cache_resource
 def load_vanguard_assets():
     scaler_path = 'models/scaler.pkl'
@@ -73,7 +80,6 @@ def load_vanguard_assets():
 
     return model, scaler, le, is_pytorch
 
-
 # Initialize the assets
 with st.spinner("Vanguard is initializing the Detection Engine..."):
     try:
@@ -84,7 +90,8 @@ with st.spinner("Vanguard is initializing the Detection Engine..."):
         st.error(f"Error loading models: {e}. Ensure the /models folder is uploaded to GitHub.")
         st.stop()
 
-# --- 5. DATA INGESTION ---
+
+# --- DATA INGESTION ---#
 st.sidebar.header("Upload Traffic Data")
 uploaded_file = st.sidebar.file_uploader("Upload Network CSV (CIC-IDS2017)", type="csv")
 
@@ -125,39 +132,49 @@ if uploaded_file is not None:
             # Map Results
             df['Threat_Type'] = le.inverse_transform(predictions)
 
-            # Dashboard Metrics
-            st.subheader("🚨 Threat Detection Dashboard")
-            col1, col2 = st.columns(2)
+            # Session State Save
+            st.session_state.analysis_results = df
 
-            with col1:
-                st.write("#### Incident Summary")
-                st.write(df['Threat_Type'].value_counts())
+# Dashboard Metrics
+if st.session_state.analysis_results is not None:
+    res_df = st.session_state.analysis_results
 
-            with col2:
-                st.write("#### Malicious Traffic Distribution")
+    st.markdown("---")
+    st.subheader("🚨 Threat Detection Dashboard")
+    col1, col2 = st.columns(2)
 
-                # Filter for attacks and get their counts
-                # We name this 'attack_counts' so line 140 can find it!
-                attack_counts = df[df['Threat_Type'] != 'BENIGN']['Threat_Type'].value_counts()
+    with col1:
+        st.write("#### Incident Summary")
+        st.write(res_df['Threat_Type'].value_counts())
 
-                # 2. Check if the series is not empty
-                if not attack_counts.empty:
-                    st.bar_chart(attack_counts)
-                else:
-                    st.success("No malicious patterns detected in the network traffic logs.")
+    with col2:
+        st.write("#### Malicious Traffic Distribution")
 
-            # Alerting Logic
-            malicious_df = df[df['Threat_Type'] != 'BENIGN']
-            if not malicious_df.empty:
-                st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
-                st.dataframe(malicious_df)
-            else:
-                st.balloons()
-                st.success("✅ System Status: Secure. All traffic identified as Benign.")
+        # Filter for attacks and get their counts
+        attack_counts = res_df[res_df['Threat_Type'] != 'BENIGN']['Threat_Type'].value_counts()
 
+        # Check if the series is not empty
+        if not attack_counts.empty:
+                st.bar_chart(attack_counts)
+        else:
+            st.success("No malicious patterns detected in the network traffic logs.")
+
+        # Alerting Logic
+        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
+        if not malicious_df.empty:
+            st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
+            st.dataframe(malicious_df)
+        else:
+            st.balloons()
+            st.success("✅ System Status: Secure. All traffic identified as Benign.")
+
+        # Add a clear button for your demo
+        if st.button("🗑️ Clear Results"):
+            st.session_state.analysis_results = None
+            st.rerun()
 else:
     st.info("Awaiting input: Upload a network traffic CSV file to begin analysis.")
 
-# --- 6. DISSERTATION FOOTER ---
+# --- DISSERTATION FOOTER ---#
 st.markdown("---")
 st.caption(" Intrusion Detection System Framework | Developed by Nicole Wangui Mbau | MSc Cybersecurity & Emerging Threats | Middlesex University Dubai")
