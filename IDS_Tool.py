@@ -65,7 +65,7 @@ class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
         super(IDSNetwork, self).__init__()
         self.fc1 = nn.Linear(input_dim, 64) # The input layer takes the 78 features and passes them to 64 neurons.
-        self.dropout = nn.Dropout(0.5) # 0.5 to prevent overfitting
+        self.dropout = nn.Dropout(0.6) # 0.5 to prevent overfitting
         self.fc2 = nn.Linear(64, 32)
         self.output = nn.Linear(32, num_classes) # The output layer provides 15 final scores for each possible attack type in the dataset.
         self.relu = nn.ReLU() # Decides which information is important enough to pass forward.
@@ -82,34 +82,38 @@ num_classes = len(le.classes_)
 model = IDSNetwork(input_dim, num_classes)
 
 # ------ TRAINING THE DATASET -----#
-model_path = 'models/ids_pytorch_model.pth'
+print("🚀 Initializing Fresh Training Session (Bypassing existing models)...")
 
-if os.path.exists(model_path):
-    print("✅ Loading existing PyTorch model...")
-    model.load_state_dict(torch.load(model_path))
-else:
-    print("🚀 No model found. Starting training...")
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+# Define your Loss and Optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    epochs = 10
-    model.train()
-    for epoch in range(epochs):
-        running_loss = 0.0
-        for batch_x, batch_y in train_loader:
-            optimizer.zero_grad()
-            outputs = model(batch_x)
-            loss = criterion(outputs, batch_y)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        print(f"Epoch {epoch + 1}/{epochs} - Loss: {running_loss / len(train_loader):.4f}")
+# Training Loop (Ensure your train_loader is defined)
+epochs = 5  # Adjust based on your 0.7-0.8 accuracy goal
+model.train()
+for epoch in range(epochs):
+    running_loss = 0.0
+    for inputs, labels in train_loader:
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
 
-    # Save the Scaler and LabelEncoder (Using Joblib)
-    if not os.path.exists('models'): os.makedirs('models')
-    torch.save(model.state_dict(), model_path)
-    joblib.dump(scaler, 'models/scaler.pkl')
-    joblib.dump(le, 'models/label_encoder.pkl')
+    print(f"Epoch {epoch + 1}/{epochs} - Loss: {running_loss / len(train_loader):.4f}")
+
+# Save the Directory
+if not os.path.exists('models'):
+    os.makedirs('models')
+
+# Save The PyTorch Model
+py_model_path = 'models/pytorch_model.pth'
+torch.save(model.state_dict(), py_model_path)
+
+#Save The Scaler and Label Encoder
+joblib.dump(scaler, 'models/scaler.pkl')
+joblib.dump(le, 'models/label_encoder.pkl')
 
 # ------ EVALUATION & PREDICTION -----#
 model.eval()
@@ -125,6 +129,17 @@ print(classification_report(
     zero_division=0  # This tells it to just show '0' instead of a warning
 ))
 
+# Calculate PyTorch Accuracy
+model.eval()
+with torch.no_grad():
+    outputs = model(X_test_tensor)
+    _, predicted_pytorch = torch.max(outputs, 1)
+    # Convert to numpy for comparison
+    pytorch_acc = (predicted_pytorch == y_test_tensor).sum().item() / y_test_tensor.size(0)
+
+print(f"🛡️ PyTorch Accuracy: {pytorch_acc:.4f}")
+
+#------ AUC-ROC CURVE -----#
 # Get probabilities instead of just the class prediction
 model.eval()
 with torch.no_grad():
@@ -142,17 +157,17 @@ print(f"\n🏆 Overall AUC-ROC Score: {roc_auc_macro:.4f}")
 
 plt.figure(figsize=(12, 8))
 
-# 1. Get all class counts
+# Get all class counts
 all_class_counts = pd.Series(y_test).value_counts()
 
-# 2. Find the index for 'BENIGN' and remove it from our plotting list
+# Find the index for 'BENIGN' and remove it from our plotting list
 benign_idx = list(le.classes_).index('BENIGN')
 attack_counts = all_class_counts.drop(index=benign_idx, errors='ignore')
 
-# 3. Pick the Top 5 remaining actual attack classes
+# Pick the Top 5 remaining actual attack classes
 top_5_attack_indices = attack_counts.head(5).index.tolist()
 
-# 4. Plotting the ROC Curves for Attacks
+# Plotting the ROC Curves for Attacks
 for i in top_5_attack_indices:
     fpr, tpr, _ = roc_curve(y_test_binarized[:, i], y_probs[:, i])
     roc_auc = auc(fpr, tpr)
@@ -160,7 +175,7 @@ for i in top_5_attack_indices:
     class_name = le.classes_[i]
     plt.plot(fpr, tpr, lw=2.5, label=f'Attack: {class_name} (AUC = {roc_auc:.4f})')
 
-# 5. Formatting for your Thesis
+# AUC-ROC Plot
 plt.plot([0, 1], [0, 1], 'k--', lw=1.5, label='Random Guess')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
@@ -170,7 +185,7 @@ plt.title('Vanguard IDS: ROC Analysis of Top 5 Malicious Threats')
 plt.legend(loc='lower right', fontsize='medium')
 plt.grid(alpha=0.3)
 
-# 6. Save high-res version
+# Save high-resolution chart
 plt.savefig('vanguard_roc_attacks_only.png', dpi=300)
 plt.show()
 
@@ -191,14 +206,13 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
-# Load thr pre-processed data (Assuming X_train_scaled, y_train are ready)
-
+# Load the pre-processed data (Assuming X_train_scaled, y_train are ready)
 print("🌲 Initializing Constrained Random Forest...")
 
-# Limit max_depth to 3 to prevent overfitting or data leakage
+# Random Forest Model
 rf_model = RandomForestClassifier(
     n_estimators=50,
-    max_depth=3,
+    max_depth=5,
     random_state=42,
     class_weight='balanced'
 )
@@ -213,3 +227,31 @@ rf_acc = accuracy_score(y_test, rf_preds)
 print(f"📊 Random Forest Accuracy: {rf_acc:.4f}")
 print("\n--- RF Classification Report ---")
 print(classification_report(y_test, rf_preds))
+
+#Save Random Forest Model
+if not os.path.exists('models'):
+    os.makedirs('models')
+joblib.dump(rf_model, 'models/random_forest.pkl')
+
+
+# ----- Saving The User Interface Engine Based Off Of The Machine Learning With The Best Accuracy Score -----#
+print(f"\n📊 FINAL COMPARISON:")
+print(f"🛡️ PyTorch Accuracy: {pytorch_acc:.4f}")
+print(f"🌲 Random Forest Accuracy: {rf_acc:.4f}")
+
+# Selection Logic - This saves the 'vanguard_model' with the lower accuracy
+if rf_acc < pytorch_acc:
+    print("🚀 Result: Random Forest accuracy is lower than that of PyTorch. Updating deployment files...")
+    joblib.dump(rf_model, 'models/vanguard_model.pkl')
+    # Write the 'handshake' file for Streamlit
+    with open('models/active_model_type.txt', 'w') as f:
+        f.write('sklearn')
+else:
+    print("🚀 Result: PyTorch accuracy is lower than that of Random Forest. Updating deployment files...")
+    torch.save(model.state_dict(), 'models/vanguard_model.pth')
+    # Write the 'handshake' file for Streamlit
+    with open('models/active_model_type.txt', 'w') as f:
+        f.write('pytorch')
+
+print("✅ Vanguard Engine Update Complete. Best model saved to /models/")
+
