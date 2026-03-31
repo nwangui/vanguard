@@ -240,7 +240,18 @@ if st.session_state.analysis_results is not None:
 
     # --- Executive Summary ---#
     st.markdown("---")
-    if st.button("📝 Generate Executive Briefing (Non-Technical)"):
+    # --- NON-TECHNICAL RISK TRANSLATOR ---
+    RISK_TRANSLATOR = {
+        'DoS': "an attempt to overwhelm our services and knock the system offline",
+        'Infiltration': "a digital break-in where an attacker is trying to gain internal access to sensitive files",
+        'Brute Force': "a coordinated attempt to guess employee passwords and take over accounts",
+        'PortScan': "an attacker 'casing' our network to find an unlocked digital door",
+        'Web Attack': "an attempt to exploit a weakness in our public-facing website",
+        'Botnet': "an infected network of devices attempting to use our resources for malicious activity",
+        'FTP-Patator': "a repetitive attempt to break into our file storage systems",
+        'SSH-Patator': "a repetitive attempt to gain remote control over our servers"
+    }
+    if st.button("📝 Generate Executive Summary (Non-Technical)"):
         # Calculate key metrics for the summary
         malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
         total_alerts = len(malicious_df)
@@ -255,12 +266,17 @@ if st.session_state.analysis_results is not None:
             col_m1.metric("Risk Level", f"{max_severity}/10", delta="High", delta_color="inverse")
             col_m2.metric("Total Anomalies", total_alerts)
 
+            # Use the translator, with a fallback for unknown threats
+            risk_explanation = RISK_TRANSLATOR.get(top_threat, f"unusual {top_threat.lower()} activity")
+
             st.write(f"""
             **Current Status:** Vanguard has identified **{total_alerts}** unusual activities that deviate from the secure network baseline.
 
-            **Primary Concern:** We are seeing a high concentration of **{top_threat}** patterns. This suggests an external attempt to {top_threat.lower().replace('-', ' ')} which could impact system availability or data integrity.
+            **Primary Concern:** Vanguard has detected a high concentration of **{top_threat}** activity. 
 
-            **Bottom Line:** An analyst should review what the system has flaggedand review the 'Action Plan' below to ensure all entry points are patched.
+            **What this means:** This suggests **{risk_explanation}**. If successful, this could lead to service outages, unauthorized access to private data, or a compromise of our system's integrity.
+
+            **Bottom Line:** An analyst should review what the system has flagged and review the 'Threat Intelligence Action Plan' below.
             """)
         else:
             st.success("### ✅ Executive Summary: System Secure")
