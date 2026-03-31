@@ -147,6 +147,30 @@ with st.spinner("Vanguard is initializing the Detection Engine..."):
 st.sidebar.header("Upload Traffic Data")
 uploaded_file = st.sidebar.file_uploader("Upload Network CSV (CIC-IDS2017)", type="csv")
 
+st.sidebar.markdown("---")
+st.sidebar.header("📖 Security Glossary")
+
+with st.sidebar.expander("What am I looking at?"):
+    st.write("""
+    Vanguard IDS is an intrusion detection system that monitors network traffic for unusual patterns.
+    """)
+
+with st.sidebar.expander("Common Terms"):
+    st.markdown("""
+    - **CVSS Score (0-10):** A 'Danger Scale.' 10 is an emergency; 1-3 is a minor issue.
+    - **Anomaly:** 'Unusual' behavior that doesn't fit the normal pattern.
+    - **Infiltration:** A digital break-in.
+    - **DoS:** A digital traffic jam intended to crash a site.
+    - **CVE:** A unique ID for a known software weakness.
+    """)
+
+with st.sidebar.expander("What should I do?"):
+    st.write("""
+    1. Check the **Risk Prioritization** table.
+    2. Focus on anything with a **CVSS Score above 7.0**.
+    3. Follow the **Action Plan** in the Threat Intelligence section.
+    """)
+
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     df.columns = df.columns.str.strip()
