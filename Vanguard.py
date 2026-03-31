@@ -192,7 +192,7 @@ if st.session_state.analysis_results is not None:
     res_df = st.session_state.analysis_results
 
     st.markdown("---")
-    st.subheader("🚨 Threat Detection Dashboard")
+    st.subheader("🚨 Threat Analysis Dashboard")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -265,10 +265,6 @@ if st.session_state.analysis_results is not None:
         st.balloons()
         st.success("✅ System Status: Secure. All traffic identified as Benign.")
 
-    # Add a clear button for your demo
-    if st.button(" ⬆ 📁 Upload New CSV File and Run Threat Analysis"):
-        st.session_state.analysis_results = None
-        st.rerun()
 else:
     st.info("Awaiting input: Upload a network traffic CSV file to begin analysis.")
 
