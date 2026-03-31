@@ -352,15 +352,15 @@ if st.session_state.analysis_results is not None:
             """)
             # (Inside the if total_alerts > 0: block of your Executive Summary button)
 
-    # Prepare the PDF
-    pdf_data = generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, risk_explanation)
+        # Prepare the PDF
+        pdf_data = generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, risk_explanation)
 
-    st.download_button(
-        label="📥 Download PDF Executive Report",
-        data=pdf_data,
-        file_name=f"Vanguard_Report_{pd.Timestamp.now().strftime('%d_%m_%Y')}.pdf",
-        mime="application/pdf"
-    )
+        st.download_button(
+            label="📥 Download PDF Executive Report",
+            data=pdf_data,
+            file_name=f"Vanguard_Report_{pd.Timestamp.now().strftime('%d_%m_%Y')}.pdf",
+            mime="application/pdf"
+        )
     # Alerting Logic
     st.markdown("---")
     st.write("### 💡Threat Intelligence (CVE Mapping)")
