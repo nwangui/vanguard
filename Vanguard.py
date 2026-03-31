@@ -215,7 +215,7 @@ if st.session_state.analysis_results is not None:
     col3, col4 = st.columns([1, 2])
 
     with col3:
-        st.write("#### ⚖️ Risk Prioritization")
+        st.write("#### Risk Prioritization")
         # Logic to map unique threats to their CVSS scores
         unique_malicious = [t for t in res_df['Threat_Type'].unique() if t != 'BENIGN']
 
@@ -231,7 +231,7 @@ if st.session_state.analysis_results is not None:
             st.write("No threats to prioritize.")
 
     with col4:
-        st.write("#### 🛡️ Severity Ranking (CVSS 3.1)")
+        st.write("#### Severity Ranking (CVSS 3.1)")
         if severity_data:
             # Displaying the severity as a horizontal bar chart for clarity
             st.bar_chart(data=sev_df, x='Threat', y='CVSS Score', color='#ff4b4b')
@@ -240,7 +240,7 @@ if st.session_state.analysis_results is not None:
 
     # Alerting Logic
     st.markdown("---")
-    st.write("### 🧠 Threat Intelligence (CVE Mapping)")
+    st.write("### 💡Threat Intelligence (CVE Mapping)")
 
     malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
     if not malicious_df.empty:
@@ -252,7 +252,7 @@ if st.session_state.analysis_results is not None:
                 with st.expander(f"🔍 Forensic Analysis: {threat} ({intel['cve']})"):
                     c_left, c_right = st.columns([3, 1])
                     with c_left:
-                        st.write(f"**Vuln Name:** {intel['name']}")
+                        st.write(f"**Vulnerability Name:** {intel['name']}")
                         st.write(f"**Description:** {intel['description']}")
                     with c_right:
                         st.metric(label="Risk Level", value=f"{intel['severity']}/10")
@@ -260,13 +260,13 @@ if st.session_state.analysis_results is not None:
                     st.warning( f"**Action Plan:** {intel.get('action', 'Monitor traffic logs and restrict source IP.')}")
 
         st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
-        st.dataframe(malicious_df)
+
     else:
         st.balloons()
         st.success("✅ System Status: Secure. All traffic identified as Benign.")
 
     # Add a clear button for your demo
-    if st.button("🗑️ Clear Results"):
+    if st.button(" ⬆ 📁 Upload New CSV File and Run Threat Analysis"):
         st.session_state.analysis_results = None
         st.rerun()
 else:
