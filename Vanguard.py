@@ -147,30 +147,6 @@ with st.spinner("Vanguard is initializing the Detection Engine..."):
 st.sidebar.header("Upload Traffic Data")
 uploaded_file = st.sidebar.file_uploader("Upload Network CSV (CIC-IDS2017)", type="csv")
 
-st.sidebar.markdown("---")
-st.sidebar.header("📖 Security Glossary")
-
-with st.sidebar.expander("What am I looking at?"):
-    st.write("""
-    Vanguard IDS is an intrusion detection system that monitors network traffic for unusual patterns.
-    """)
-
-with st.sidebar.expander("Common Terms"):
-    st.markdown("""
-    - **CVSS Score (0-10):** A 'Danger Scale.' 10 is an emergency; 1-3 is a minor issue.
-    - **Anomaly:** 'Unusual' behavior that doesn't fit the normal pattern.
-    - **Infiltration:** A digital break-in.
-    - **DoS:** A digital traffic jam intended to crash a site.
-    - **CVE:** A unique ID for a known software weakness.
-    """)
-
-with st.sidebar.expander("What should I do?"):
-    st.write("""
-    1. Check the **Risk Prioritization** table.
-    2. Focus on anything with a **CVSS Score above 7.0**.
-    3. Follow the **Action Plan** in the Threat Intelligence section.
-    """)
-
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
     df.columns = df.columns.str.strip()
@@ -261,6 +237,38 @@ if st.session_state.analysis_results is not None:
             st.bar_chart(data=sev_df, x='Threat', y='CVSS Score', color='#ff4b4b')
         else:
             st.info("Awaiting threat data for risk visualization.")
+
+    # --- Executive Summary ---#
+    st.markdown("---")
+    if st.button("📝 Generate Executive Briefing (Non-Technical)"):
+        # Calculate key metrics for the summary
+        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
+        total_alerts = len(malicious_df)
+
+        if total_alerts > 0:
+            # Identify the most frequent and most severe threats
+            top_threat = malicious_df['Threat_Type'].value_counts().idxmax()
+            max_severity = malicious_df['Threat_Type'].map(lambda x: CVE_INTEL_BASE.get(x, {}).get('severity', 0)).max()
+
+            st.warning(f"### 📋 Executive Summary: Action Required")
+            col_m1, col_m2 = st.columns(2)
+            col_m1.metric("Risk Level", f"{max_severity}/10", delta="High", delta_color="inverse")
+            col_m2.metric("Total Anomalies", total_alerts)
+
+            st.write(f"""
+            **Current Status:** Vanguard has identified **{total_alerts}** unusual activities that deviate from the secure network baseline.
+
+            **Primary Concern:** We are seeing a high concentration of **{top_threat}** patterns. This suggests an external attempt to {top_threat.lower().replace('-', ' ')} which could impact system availability or data integrity.
+
+            **Bottom Line:** An analyst should review what the system has flaggedand review the 'Action Plan' below to ensure all entry points are patched.
+            """)
+        else:
+            st.success("### ✅ Executive Summary: System Secure")
+            st.write("""
+            **Current Status:** The analyzed traffic shows no unusual patterns**. 
+
+            **Conclusion:** All network behavior aligns with the secure baseline. No suspicious login attempts, break-ins, or service disruptions were detected. No further action is required from management at this time.
+            """)
 
     # Alerting Logic
     st.markdown("---")
