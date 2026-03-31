@@ -7,9 +7,70 @@ import joblib
 import os
 import torch
 import torch.nn as nn
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from io import BytesIO
 
 
-# --- THREAT INTELLIGENCE BASE: CIC-IDS2017 to CVE MAPPING ---
+# --- PDF GENERATION --- #
+def generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, explanation):
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # --- Header ---
+    p.setFont("Helvetica-Bold", 20)
+    p.drawString(100, height - 50, "🛡️ Project Vanguard: Security Briefing")
+    p.setFont("Helvetica", 10)
+    p.drawString(100, height - 65, f"Report Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    p.line(100, height - 75, 500, height - 75)
+
+    # --- Executive Summary Section ---
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(100, height - 100, "1. Executive Summary")
+    p.setFont("Helvetica", 11)
+
+    text_object = p.beginText(100, height - 120)
+    text_object.setFont("Helvetica", 11)
+    text_object.setLeading(14)
+
+    summary_text = [
+        f"Status: ACTION REQUIRED",
+        f"Total Anomalies Detected: {len(malicious_df)}",
+        f"Highest Risk Identified: {top_threat} (Score: {max_severity}/10)",
+        "",
+        "Primary Concern:",
+        f"Vanguard has detected a high concentration of {top_threat} activity.",
+        "",
+        "Risk Translation:",
+        f"This suggests {explanation}.",
+        "If successful, this could lead to service outages or unauthorized access."
+    ]
+
+    for line in summary_text:
+        text_object.textLine(line)
+    p.drawText(text_object)
+
+    # --- Threat Distribution ---
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(100, height - 320, "2. Incident Breakdown")
+    p.setFont("Helvetica", 11)
+    y_shift = 340
+    counts = malicious_df['Threat_Type'].value_counts()
+    for threat, count in counts.items():
+        p.drawString(120, height - y_shift, f"• {threat}: {count} occurrences")
+        y_shift += 20
+
+    # --- Footer ---
+    p.setFont("Helvetica-Oblique", 8)
+    p.drawString(100, 50, "Developed by Nicole Wangui Mbau | MSc Cybersecurity | Middlesex University Dubai")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer
+
+# --- CVE MAPPING --- #
 CVE_INTEL_BASE = {
     'DoS': {
         'cve': 'CVE-2023-44487',
@@ -77,7 +138,7 @@ st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide"
 st.title("🛡️ Vanguard: AI-Intrusion Detection System")
 st.markdown(f"""
 **Status:** {"☁️ Cloud Mode (Optimized)" if IS_CLOUD else "💻 Local Mode (Full)"}  
-Vanguard Intrusion detection system acts as a decision-support tool for human analysts, rather than a fully autonomous gatekeeper based on known criteria (Threat, Risk, CVE)
+**Vanguard Intrusion detection system acts as a decision-support tool for human analysts, rather than a fully autonomous gatekeeper based on known criteria (Threat, Risk, CVE)**
 """)
 
 
@@ -289,7 +350,17 @@ if st.session_state.analysis_results is not None:
 
             **Conclusion:** All network behavior aligns with the secure baseline. No suspicious login attempts, break-ins, or service disruptions were detected. No further action is required from management at this time.
             """)
+            # (Inside the if total_alerts > 0: block of your Executive Summary button)
 
+    # Prepare the PDF
+    pdf_data = generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, risk_explanation)
+
+    st.download_button(
+        label="📥 Download PDF Executive Report",
+        data=pdf_data,
+        file_name=f"Vanguard_Report_{pd.Timestamp.now().strftime('%d_%m_%Y')}.pdf",
+        mime="application/pdf"
+    )
     # Alerting Logic
     st.markdown("---")
     st.write("### 💡Threat Intelligence (CVE Mapping)")
