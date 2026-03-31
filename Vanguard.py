@@ -77,7 +77,7 @@ st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide"
 st.title("🛡️ Vanguard: AI-Intrusion Detection System")
 st.markdown(f"""
 **Status:** {"☁️ Cloud Mode (Optimized)" if IS_CLOUD else "💻 Local Mode (Full)"}  
-This framework dynamically selects the most robust engine (PyTorch or Random Forest) to mitigate overfitting and detect known and unknown network anomalies.
+Vanguard Intrusion detection system acts as a decision-support tool for human analysts, rather than a fully autonomous gatekeeper based on known criteria (Threat, Risk, CVE)
 """)
 
 
