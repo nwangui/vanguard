@@ -247,7 +247,7 @@ if st.session_state.analysis_results is not None:
         'Brute Force': "a coordinated attempt to guess employee passwords and take over accounts",
         'PortScan': "an attacker 'casing' our network to find an unlocked digital door",
         'Web Attack': "an attempt to exploit a weakness in our public-facing website",
-        'Botnet': "an infected network of devices attempting to use our resources for malicious activity",
+        'Bot': "an infected network of devices attempting to use our resources for malicious activity",
         'FTP-Patator': "a repetitive attempt to break into our file storage systems",
         'SSH-Patator': "a repetitive attempt to gain remote control over our servers"
     }
