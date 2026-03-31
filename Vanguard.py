@@ -240,7 +240,7 @@ if st.session_state.analysis_results is not None:
 
     # --- Executive Summary ---#
     st.markdown("---")
-    # --- NON-TECHNICAL RISK TRANSLATOR ---
+    # --- Non-Technical Risk Translator---#
     RISK_TRANSLATOR = {
         'DoS': "an attempt to overwhelm our services and knock the system offline",
         'Infiltration': "a digital break-in where an attacker is trying to gain internal access to sensitive files",
@@ -251,37 +251,41 @@ if st.session_state.analysis_results is not None:
         'FTP-Patator': "a repetitive attempt to break into our file storage systems",
         'SSH-Patator': "a repetitive attempt to gain remote control over our servers"
     }
+
     if st.button("📝 Generate Executive Summary (Non-Technical)"):
-        # Calculate key metrics for the summary
         malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
         total_alerts = len(malicious_df)
 
         if total_alerts > 0:
-            # Identify the most frequent and most severe threats
-            top_threat = malicious_df['Threat_Type'].value_counts().idxmax()
-            max_severity = malicious_df['Threat_Type'].map(lambda x: CVE_INTEL_BASE.get(x, {}).get('severity', 0)).max()
+            # A temporary list of detected threats and their scores
+            detected_threats = malicious_df['Threat_Type'].unique()
+
+            # Find the threat with the highest CVSS score
+            top_threat = max(detected_threats, key=lambda x: CVE_INTEL_BASE.get(x, {}).get('severity', 0))
+            max_severity = CVE_INTEL_BASE.get(top_threat, {}).get('severity', 0)
 
             st.warning(f"### 📋 Executive Summary: Action Required")
             col_m1, col_m2 = st.columns(2)
-            col_m1.metric("Risk Level", f"{max_severity}/10", delta="High", delta_color="inverse")
+            col_m1.metric("Highest Risk Level", f"{max_severity}/10",
+                          delta="Critical" if max_severity > 8 else "High", delta_color="inverse")
             col_m2.metric("Total Anomalies", total_alerts)
 
-            # Use the translator, with a fallback for unknown threats
-            risk_explanation = RISK_TRANSLATOR.get(top_threat, f"unusual {top_threat.lower()} activity")
+            # Get translation for the highest risk threat
+            risk_explanation = RISK_TRANSLATOR.get(top_threat, f"unusual activity")
 
             st.write(f"""
             **Current Status:** Vanguard has identified **{total_alerts}** unusual activities that deviate from the secure network baseline.
 
-            **Primary Concern:** Vanguard has detected a high concentration of **{unique_malicious}** activity. 
+            **Primary Concern:** The most critical threat detected is **{top_threat}**. 
 
-            **What this means:** This suggests **{risk_explanation}**. If successful, this could lead to service outages, unauthorized access to private data, or a compromise of our system's integrity.
+            **What this means:** This suggests **{risk_explanation}**. Even a single instance of this activity could lead to service outages, unauthorized access to private data, or a total compromise of our system's integrity.
 
-            **Bottom Line:** An analyst should review what the system has flagged and review the 'Threat Intelligence Action Plan' below.
+            **Bottom Line:** An analyst should prioritize investigating the **{top_threat}** alerts immediately. As well as review the 'Threat Intelligence Action Plan' at the bottom of this page for mitigation steps.
             """)
         else:
             st.success("### ✅ Executive Summary: System Secure")
             st.write("""
-            **Current Status:** The analyzed traffic shows no unusual patterns**. 
+            **Current Status:** The analyzed traffic shows no unusual patterns. 
 
             **Conclusion:** All network behavior aligns with the secure baseline. No suspicious login attempts, break-ins, or service disruptions were detected. No further action is required from management at this time.
             """)
