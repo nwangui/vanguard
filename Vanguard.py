@@ -62,7 +62,7 @@ def generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, explana
         y_shift += 20
 
     # --- Footer ---
-    p.setFont("Times-Roman-Oblique", 8)
+    p.setFont("Times-Italic", 8)
     p.drawString(100, 50, "Developed by Nicole Wangui Mbau | MSc Cybersecurity and Emerging Threats | Middlesex University Dubai")
 
     p.showPage()
