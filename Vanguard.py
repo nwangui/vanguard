@@ -291,8 +291,6 @@ if st.session_state.analysis_results is not None:
 
                     st.warning( f"**Action Plan:** {intel.get('action', 'Monitor traffic logs and restrict source IP.')}")
 
-        st.error(f"🔥 ALERT: {len(malicious_df)} High-Risk entries identified.")
-
     else:
         st.balloons()
         st.success("✅ System Status: Secure. All traffic identified as Benign.")
