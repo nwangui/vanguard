@@ -19,19 +19,19 @@ def generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, explana
     width, height = letter
 
     # --- Header ---
-    p.setFont("Times New Roman-Bold", 20)
+    p.setFont("Times-Bold", 20)
     p.drawString(100, height - 50, "Project Vanguard: Network Traffic Log Executive Summary")
-    p.setFont("Times New Roman", 10)
+    p.setFont("Times-Roman", 10)
     p.drawString(100, height - 65, f"Report Generated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
     p.line(100, height - 75, 500, height - 75)
 
     # --- Executive Summary Section ---
-    p.setFont("Times New Roman-Bold", 14)
+    p.setFont("Times-Bold", 14)
     p.drawString(100, height - 100, "1. Executive Summary")
-    p.setFont("Times New Roman", 11)
+    p.setFont("Times-Roman", 11)
 
     text_object = p.beginText(100, height - 120)
-    text_object.setFont("Times New Roman", 11)
+    text_object.setFont("Times-Roman", 11)
     text_object.setLeading(14)
 
     summary_text = [
@@ -52,9 +52,9 @@ def generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, explana
     p.drawText(text_object)
 
     # --- Threat Distribution ---
-    p.setFont("Helvetica-Bold", 14)
+    p.setFont("Times-Bold", 14)
     p.drawString(100, height - 320, "2. Threat Breakdown")
-    p.setFont("Helvetica", 11)
+    p.setFont("Times-Roman", 11)
     y_shift = 340
     counts = malicious_df['Threat_Type'].value_counts()
     for threat, count in counts.items():
@@ -62,7 +62,7 @@ def generate_pdf_summary(res_df, malicious_df, top_threat, max_severity, explana
         y_shift += 20
 
     # --- Footer ---
-    p.setFont("Times New Roman-Oblique", 8)
+    p.setFont("Times-Oblique", 8)
     p.drawString(100, 50, "Developed by Nicole Wangui Mbau | MSc Cybersecurity and Emerging Threats | Middlesex University Dubai")
 
     p.showPage()
