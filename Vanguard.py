@@ -272,7 +272,7 @@ if st.session_state.analysis_results is not None:
             st.write(f"""
             **Current Status:** Vanguard has identified **{total_alerts}** unusual activities that deviate from the secure network baseline.
 
-            **Primary Concern:** Vanguard has detected a high concentration of **{top_threat}** activity. 
+            **Primary Concern:** Vanguard has detected a high concentration of **{unique_malicious}** activity. 
 
             **What this means:** This suggests **{risk_explanation}**. If successful, this could lead to service outages, unauthorized access to private data, or a compromise of our system's integrity.
 
