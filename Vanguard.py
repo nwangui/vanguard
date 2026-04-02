@@ -282,7 +282,7 @@ if st.session_state.analysis_results is not None:
 
             **What this means:** This suggests **{risk_explanation}**. Even a single instance of this activity could lead to service outages, unauthorized access to private data, or a total compromise of our system's integrity.
 
-            **Bottom Line:** An analyst should prioritize investigating the **{top_threat}** alerts immediately. As well as review the 'Threat Intelligence Action Plan' at the bottom of this page for mitigation steps.
+            **Bottom Line:** An analyst should prioritize investigating the **{top_threat}** alerts immediately!
             """)
         else:
             st.success("### ✅ Executive Summary: System Secure")
