@@ -203,12 +203,20 @@ if st.session_state.analysis_results is not None:
 
     with col2:
         st.write("#### Malicious Traffic Distribution")
-        # Filter for attacks and get their counts
-        attack_counts = res_df[res_df['Threat_Type'] != 'BENIGN']['Threat_Type'].value_counts()
 
-        # Check if the series is not empty
+        # Filter for attacks
+        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
+
+        # Get counts and transform into a DataFrame - .reset_index() turns the Threat Names into a real column
+        attack_counts = malicious_df['Threat_Type'].value_counts().reset_index()
+
+        # Explicitly name the columns for the chart to reference
+        attack_counts.columns = ['Threat Type', ' Count']
+
+        # 4. Check if the dataframe is not empty
         if not attack_counts.empty:
-                st.bar_chart(attack_counts)
+            # We pass 'x' and 'y' using the new column names
+            st.bar_chart(data=attack_counts, x='Threat Type', y='Count', color='#2162db')
         else:
             st.success("No malicious patterns detected in the network traffic logs.")
 
