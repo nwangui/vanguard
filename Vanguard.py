@@ -208,7 +208,7 @@ if st.session_state.analysis_results is not None:
 
         # Check if the series is not empty
         if not attack_counts.empty:
-                st.bar_chart(data=attack_counts, x='Threat', y='Count', color='#2162db')
+                st.bar_chart(attack_counts)
         else:
             st.success("No malicious patterns detected in the network traffic logs.")
 
