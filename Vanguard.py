@@ -195,7 +195,7 @@ if st.session_state.analysis_results is not None:
 
     st.markdown("---")
     st.subheader("🚨 Threat Analysis Dashboard")
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1,2])
 
     with col1:
         st.write("#### Incident Summary")
@@ -203,13 +203,12 @@ if st.session_state.analysis_results is not None:
 
     with col2:
         st.write("#### Malicious Traffic Distribution")
-
         # Filter for attacks and get their counts
         attack_counts = res_df[res_df['Threat_Type'] != 'BENIGN']['Threat_Type'].value_counts()
 
         # Check if the series is not empty
         if not attack_counts.empty:
-                st.bar_chart(attack_counts)
+                st.bar_chart(data=attack_counts, x='Threat', y='Count', color='#2162db')
         else:
             st.success("No malicious patterns detected in the network traffic logs.")
 
