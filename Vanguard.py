@@ -21,7 +21,7 @@ CVE_INTEL_BASE = {
         'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion.'
     },
     'PortScan': {
-        'cve': 'N/A (Recon)',
+        'cve': 'CVE-2021-41773',
         'name': 'Network Enumeration',
         'severity': 3.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N',
