@@ -17,49 +17,57 @@ CVE_INTEL_BASE = {
         'cve': 'CVE-2023-44487',
         'name': 'HTTP/2 Rapid Reset',
         'severity': 7.5,
-        'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion (Denial of Service).'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
+        'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion.'
     },
     'PortScan': {
-        'cve': 'N/A (Reconnaissance)',
+        'cve': 'N/A (Recon)',
         'name': 'Network Enumeration',
         'severity': 3.3,
-        'description': 'Identifying active ports and services. Often the precursor to an exploit like CVE-2021-41773 (Apache Path Traversal).'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N',
+        'description': 'Identifying active services. Often a precursor to exploits like CVE-2021-41773.'
     },
     'Brute Force': {
         'cve': 'CVE-2020-3580',
         'name': 'Cisco ASA Auth Bypass',
         'severity': 6.1,
-        'description': 'Attempting to gain unauthorized access via credential stuffing or password guessing on administrative interfaces.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N',
+        'description': 'Attempting unauthorized access via credential stuffing on administrative interfaces.'
     },
     'Infiltration': {
         'cve': 'CVE-2021-44228',
         'name': 'Log4Shell (RCE)',
         'severity': 10.0,
-        'description': 'Remote Code Execution (RCE) via Log4j logging. One of the most critical infiltration vulnerabilities in history.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H',
+        'description': 'Critical Remote Code Execution (RCE) via Log4j. Highly pervasive infiltration risk.'
     },
     'Web Attack': {
         'cve': 'CVE-2022-22965',
         'name': 'Spring4Shell',
         'severity': 9.8,
-        'description': 'Remote Code Execution in Spring Framework via data binding, typically targeting web-facing applications.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+        'description': 'RCE in Spring Framework via data binding, targeting web-facing applications.'
     },
     'Botnet': {
         'cve': 'CVE-2016-10372',
         'name': 'Mirai Variant',
         'severity': 7.3,
-        'description': 'Infecting IoT devices to create a distributed network for large-scale DDoS attacks.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:H',
+        'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.'
     },
     'FTP-Patator': {
-        'cve': 'Common Protocol Weakness',
-        'name': 'Protocol Brute Force',
+        'cve': 'Protocol Vulnerability',
+        'name': 'FTP Brute Force',
         'severity': 5.3,
-        'description': 'Exploiting weak authentication on file transfer and remote shell protocols.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
+        'description': 'Automated authentication attacks against the File Transfer Protocol.'
     },
     'SSH-Patator': {
-        'cve': 'Common Protocol Weakness',
-        'name': 'Protocol Brute Force',
+        'cve': 'Protocol Vulnerability',
+        'name': 'SSH Brute Force',
         'severity': 5.3,
-        'description': 'Exploiting weak authentication on file transfer and remote shell protocols.'
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
+        'description': 'Automated authentication attacks against the Secure Shell protocol.'
     }
 }
 
@@ -314,12 +322,16 @@ if st.session_state.analysis_results is not None:
                     c_left, c_right = st.columns([3, 1])
                     with c_left:
                         st.write(f"**Vulnerability Name:** {intel['name']}")
+                        st.write(f"**Vector:** {intel['vector']}")
                         st.write(f"**Description:** {intel['description']}")
                     with c_right:
                         st.metric(label="Risk Level", value=f"{intel['severity']}/10")
 
                     st.warning( f"**Action Plan:** {intel.get('action', 'Monitor traffic logs and restrict source IP.')}")
 
+                    cve_id = intel.get('cve')
+                    if cve_id:
+                        st.markdown(f"[🔗 View Official MITRE Advisory for {cve_id}](https://cve.mitre.org/cgi-bin/cvename.cgi?name={cve_id})")
     else:
         st.balloons()
         st.success("✅ System Status: Secure. All traffic identified as Benign.")
