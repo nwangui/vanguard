@@ -22,10 +22,10 @@ CVE_INTEL_BASE = {
     },
     'PortScan': {
         'cve': 'CVE-2021-41773',
-        'name': 'Network Enumeration',
+        'name': 'Network Enumeration (CWE-200)',
         'severity': 3.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N',
-        'description': 'Identifying active services. Often a precursor to exploits like CVE-2021-41773.'
+        'description': 'Identifying active services. This is the precursor to an exploit like the Apache Path Traversal.'
     },
     'Brute Force': {
         'cve': 'CVE-2020-3580',
@@ -56,18 +56,18 @@ CVE_INTEL_BASE = {
         'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.'
     },
     'FTP-Patator': {
-        'cve': 'Protocol Vulnerability',
-        'name': 'FTP Brute Force',
+        'cve': 'CVE-2025-49195',
+        'name': 'FTP Brute Force (CWE-307)',
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
-        'description': 'Automated authentication attacks against the File Transfer Protocol.'
+        'description': 'Automated authentication attacks against the File Transfer Protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) due to a lack of login rate-limiting.'
     },
     'SSH-Patator': {
-        'cve': 'Protocol Vulnerability',
-        'name': 'SSH Brute Force',
+        'cve': 'CVE-2020-1616',
+        'name': 'SSH Brute Force (CWE-307)',
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
-        'description': 'Automated authentication attacks against the Secure Shell protocol.'
+        'description': 'Automated authentication attacks against the Secure Shell protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) to gain unauthorized shell access.'
     }
 }
 
