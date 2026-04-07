@@ -1,6 +1,7 @@
 # ------- VANGUARD IDS: PYTORCH & RF DUAL-ENGINE TRAINING (AUC-ROC BASED) --------#
 
 import os
+from turtle import st
 import pandas as pd
 import numpy as np
 import zipfile
@@ -27,7 +28,7 @@ CVE_INTEL_MAP = {
     'Brute Force': 'CVE-2020-3580 (Cisco ASA Auth Bypass)',
     'Infiltration': 'CVE-2021-44228 (Log4Shell RCE)',
     'Web Attack': 'CVE-2022-22965 (Spring4Shell)',
-    'Botnet': 'CVE-2016-10372 (Mirai Variant)',
+    'Bot': 'CVE-2016-10372 (Mirai Variant)',
     'FTP-Patator': 'Protocol Brute Force (FTP)',
     'SSH-Patator': 'Protocol Brute Force (SSH)'
 }
@@ -36,11 +37,15 @@ CVE_INTEL_MAP = {
 def load_and_merge_zip(zip_path):
     all_df = []
     with zipfile.ZipFile(zip_path, 'r') as z:
-        for file_name in z.namelist():
-            if file_name.endswith('.csv') and not file_name.startswith('__'):
-                print(f"Reading: {file_name}")
-                with z.open(file_name) as f:
-                    all_df.append(pd.read_csv(f))
+        csv_files = [f for f in z.namelist() if f.endswith('.csv') and not f.startswith('__')]
+        if not csv_files:
+            st.warning("⚠️ The ZIP archive contains no valid .csv network traffic logs.")
+            return None
+
+        for file_name in csv_files:
+            print(f"Reading: {file_name}")
+            with z.open(file_name) as f:
+                all_df.append(pd.read_csv(f))
     return pd.concat(all_df, ignore_index=True)
 
 df = load_and_merge_zip('MachineLearningCSV.zip')
