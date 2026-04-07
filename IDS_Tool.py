@@ -39,9 +39,8 @@ def load_and_merge_zip(zip_path):
     with zipfile.ZipFile(zip_path, 'r') as z:
         csv_files = [f for f in z.namelist() if f.endswith('.csv') and not f.startswith('__')]
         if not csv_files:
-            st.warning("⚠️ The ZIP archive contains no valid .csv network traffic logs.")
+            st.warning("⚠️ The ZIP file contains no valid .csv network traffic logs.")
             return None
-
         for file_name in csv_files:
             print(f"Reading: {file_name}")
             with z.open(file_name) as f:
@@ -144,7 +143,7 @@ print("\n📋 Random Forest Classification Report:")
 print(classification_report(y_test, rf_preds, target_names=le.classes_, zero_division=0))
 
 
-# --- UAL-ENGINE ROC VISUALIZATION --- #
+# --- ENGINE AUC-ROC VISUALIZATION --- #
 # Identify the index for 'BENIGN' and remove it from plotting to show actual attacks
 benign_idx = list(le.classes_).index('BENIGN')
 
@@ -174,29 +173,29 @@ plot_engine_roc(y_test_binarized, pytorch_probs, le.classes_, "PyTorch Neural Ne
 print("Generating Random Forest ROC Analysis Chart...")
 plot_engine_roc(y_test_binarized, rf_probs, le.classes_, "Random Forest (Ensemble)", 'rf_roc_attacks.png')
 
-# --- 5. STRATEGIC SELECTION HANDSHAKE --- #
+# --- MACHINE LEARNING ENGINE SELECTION --- #
 if not os.path.exists('models'): os.makedirs('models')
 
-# Priority given to AUC-ROC for Handling Imbalance
+# AUC-ROC Comparison
 print(f"\n📊 FINAL FORENSIC COMPARISON:")
 print(f"🛡️ PyTorch AUC-ROC: {pytorch_auc:.4f}")
 print(f"🌲 Random Forest AUC-ROC: {rf_auc:.4f}")
 
-# Selection Logic
+# Engine Selection Logic
 if rf_auc > pytorch_auc:
     print("\n✅ Selection: Random Forest had superior AUC-ROC. Deploying RF as active engine...")
     joblib.dump(rf_model, 'models/vanguard_model.pkl')
-    # Write the 'handshake' file for Streamlit (vanguard.py)
+    # Write the file for Streamlit (vanguard.py)
     with open('models/active_model_type.txt', 'w') as f:
         f.write('sklearn')
 else:
     print("\n✅ Selection: PyTorch had superior AUC-ROC. Deploying PyTorch as active engine...")
     torch.save(pytorch_model.state_dict(), 'models/vanguard_model.pth')
-    # Write the 'handshake' file for Streamlit (vanguard.py)
+    # Write the file for Streamlit (vanguard.py)
     with open('models/active_model_type.txt', 'w') as f:
         f.write('pytorch')
 
-# Save universal assets (Scaler and LabelEncoder are shared)
+# Save universal assets (Scaler and LabelEncoder)
 joblib.dump(scaler, 'models/scaler.pkl')
 joblib.dump(le, 'models/label_encoder.pkl')
 

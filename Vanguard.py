@@ -237,7 +237,7 @@ if st.session_state.analysis_results is not None:
             sev_df = pd.DataFrame(severity_data).sort_values(by='CVSS Score', ascending=False)
             st.dataframe(sev_df.set_index('Threat'))
         else:
-            st.write("No threats to prioritize.")
+            st.write("No critical threats.")
 
     with col4:
         st.write("#### Severity Ranking (CVSS 3.1)")
