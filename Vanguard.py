@@ -327,6 +327,19 @@ if st.session_state.analysis_results is not None:
         for threat in unique_threats:
             intel = CVE_INTEL_BASE.get(threat, None)
             if intel:
+                with st.expander("📝 CVSS v3.1 Vector Key (Forensic Reference)"):
+                    st.markdown("""
+                    | Metric | Code | Description |
+                    | :--- | :--- | :--- |
+                    | **Attack Vector (AV)** | **N** / **A** / **L** / **P** | Network / Adjacent / Local / Physical |
+                    | **Attack Complexity (AC)** | **L** / **H** | **Low** (Easy to exploit) / **High** (Requires specialized conditions) |
+                    | **Privileges Required (PR)** | **N** / **L** / **H** | **None** / **Low** (User) / **High** (Admin) |
+                    | **User Interaction (UI)** | **N** / **R** | **None** (Silent) / **Required** (Victim must click/act) |
+                    | **Scope (S)** | **U** / **C** | **Unchanged** / **Changed** (Impact spreads to other systems) |
+                    | **Impact (C/I/A)** | **N** / **L** / **H** | **None** / **Low** / **High** (Confidentiality, Integrity, Availability) |
+                    """)
+                    st.caption("Standardized according to the FIRST.org CVSS v3.1 Specification.")
+
                 with st.expander(f"🔍 Forensic Analysis: {threat} ({intel['cve']})"):
                     c_left, c_right = st.columns([3, 1])
                     with c_left:
