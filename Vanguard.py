@@ -85,10 +85,15 @@ MAX_ROWS = 5000 if IS_CLOUD else None
 st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide")
 
 st.title("🛡️ Vanguard: AI-Intrusion Detection System")
-st.markdown(f"""
-**Status:** {"☁️ Cloud Mode (Optimized)" if IS_CLOUD else "💻 Local Mode (Full)"}  
-**Vanguard Intrusion Detection System acts as a decision-support tool for human analysts, rather than a fully autonomous system based on known criteria (Threat, Risk, CVE)**
-""")
+st.markdown("""
+    <div style="background-color:#0e1117; padding:15px; border-radius:10px; border-left: 5px solid #ff4b4b;">
+        <h3 style="margin:0;">🛡️ Vanguard IDS</h3>
+        <p style="color:#fafafa; font-size:14px;">
+            A forensic-aware behavioral intelligence platform utilizing dual-engine machine learning to 
+            transform raw network telemetry into prioritized, actionable incident response.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # --- PYTORCH ARCHITECTURE ---#
