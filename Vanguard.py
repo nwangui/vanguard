@@ -325,7 +325,7 @@ if st.session_state.analysis_results is not None:
         unique_threats = malicious_df['Threat_Type'].unique()
 
         # Vector Key
-        with st.expander("📝 CVSS v3.1 Vector Key (Forensic Reference)"):
+        with st.expander("🗝️ CVSS v3.1 Vector Key (Forensic Reference)"):
             st.markdown("""
             | Metric | Code | Description |
             | :--- | :--- | :--- |
