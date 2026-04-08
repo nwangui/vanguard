@@ -85,13 +85,18 @@ MAX_ROWS = 5000 if IS_CLOUD else None
 st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide")
 
 st.markdown("""
-    st.title("🛡️ Vanguard: AI-Intrusion Detection System")
-    <div style="background-color:#0e1117; padding:15px; border-radius:10px; border-left: 5px solid #ffffff;">
-        <p style="color:#ffffff; font-size:14px;">
-            A forensic-aware behavioral intelligence platform utilizing dual-engine machine learning to 
-            transform raw network telemetry into prioritized, actionable incident response.
+    <div style="background-color:#0e1117; padding:20px; border-radius:10px; border: 1px solid #30363d; border-left: 5px solid #ffffff;">
+        <h2 style="color:#ffffff; margin-top:0; font-family: sans-serif;">🛡️ Vanguard: AI-Intrusion Detection System</h2>
+        <p style="color:#8b949e; font-size:15px; line-height:1.6;">
+            A forensic intelligence tool that utilizes dual-engine machine learning to bridge the gap between automated detection and human triage 
+            by mapping real-time behavioral anomalies to standardized CVSS 3.1 intelligence and MITRE CVE references.
         </p>
+        <div style="display: flex; gap: 15px; font-family: monospace; font-size: 11px; margin-top: 10px;">
+            <span style="color:#3fb950; background-color:rgba(63,185,80,0.1); padding:2px 8px; border-radius:5px;">● SYSTEM ONLINE</span>
+            <span style="color:#58a6ff; background-color:rgba(88,166,255,0.1); padding:2px 8px; border-radius:5px;">● CVSS v3.1 MAPPING</span>
+        </div>
     </div>
+    <br>
     """, unsafe_allow_html=True)
 
 
