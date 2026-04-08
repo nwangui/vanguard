@@ -87,13 +87,14 @@ st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide"
 st.markdown("""
     <div style="background-color:#0e1117; padding:20px; border-radius:10px; border: 1px solid #30363d; border-left: 5px solid #ffffff;">
         <h2 style="color:#ffffff; margin-top:0; font-family: sans-serif;">🛡️ Vanguard: AI-Intrusion Detection System</h2>
-        <p style="color:#8b949e; font-size:15px; line-height:1.6;">
+        <p style="color:#ffffff; font-size:15px; line-height:1.6;">
             A forensic intelligence tool that utilizes dual-engine machine learning to bridge the gap between automated detection and human triage 
             by mapping real-time behavioral anomalies to standardized CVSS 3.1 intelligence and MITRE CVE references.
         </p>
         <div style="display: flex; gap: 15px; font-family: monospace; font-size: 11px; margin-top: 10px;">
             <span style="color:#3fb950; background-color:rgba(63,185,80,0.1); padding:2px 8px; border-radius:5px;">● SYSTEM ONLINE</span>
             <span style="color:#58a6ff; background-color:rgba(88,166,255,0.1); padding:2px 8px; border-radius:5px;">● CVSS v3.1 MAPPING</span>
+            <span style="color:#f1e05a; background-color:rgba(241,224,90,0.1); padding:2px 8px; border-radius:5px;">● MODEL: RANDOM FOREST + PYTORCH</span>
         </div>
     </div>
     <br>
