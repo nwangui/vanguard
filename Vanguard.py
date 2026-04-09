@@ -360,7 +360,7 @@ if st.session_state.analysis_results is not None:
                     with c_right:
                         st.metric(label="Risk Level", value=f"{intel['severity']}/10")
 
-                    st.warning( f"**Action Plan:** {intel.get('action', 'Monitor traffic logs and restrict source IP.')}")
+                    st.warning( f"**Action Plan:** {intel['action']}")
 
                     cve_id = intel.get('cve')
                     if cve_id:
