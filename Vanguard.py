@@ -16,64 +16,64 @@ CVE_INTEL_BASE = {
         'name': 'HTTP/2 Rapid Reset',
         'severity': 7.5,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
-        'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion.'
-        'action: Rate-limit or block the source IP immediately and update server software to patched versions.'
+        'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion.',
+        'action': 'Rate-limit or block the source IP immediately and update server software to patched versions.',
     },
     'PortScan': {
         'cve': 'CVE-2021-41773',
         'name': 'Network Enumeration (CWE-200)',
         'severity': 3.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N',
-        'description': 'Identifying active services. This is the precursor to an exploit like the Apache Path Traversal.'
-        'action: Audit and close all non-essential open ports. Enable port-scan detection on your IDS/IPS and treat this as a precursor.'
+        'description': 'Identifying active services. This is the precursor to an exploit like the Apache Path Traversal.',
+        'action': 'Audit and close all non-essential open ports. Enable port-scan detection on your IDS/IPS and treat this as a precursor.'
     },
     'Brute Force': {
         'cve': 'CVE-2020-3580',
         'name': 'Cisco ASA Auth Bypass',
         'severity': 6.1,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N',
-        'description': 'Attempting unauthorized access via credential stuffing on administrative interfaces.'
-        'action: Temporarily block the offending IP. Enforce account lockout after 5 failed attempts. Mandate MFA on all administrative interfaces.'
+        'description': 'Attempting unauthorized access via credential stuffing on administrative interfaces.',
+        'action': 'Temporarily block the offending IP. Enforce account lockout after 5 failed attempts. Mandate MFA on all administrative interfaces.'
     },
     'Infiltration': {
         'cve': 'CVE-2021-44228',
         'name': 'Log4Shell (RCE)',
         'severity': 10.0,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H',
-        'description': 'Critical Remote Code Execution (RCE) via Log4j. Highly pervasive infiltration risk.'
-        'action: Isolate the affected host from the network immediately. Conduct a full forensic audit of the host for persistence mechanisms and data exfiltration.'
+        'description': 'Critical Remote Code Execution (RCE) via Log4j. Highly pervasive infiltration risk.',
+        'action': 'Isolate the affected host from the network immediately. Conduct a full forensic audit of the host for persistence mechanisms and data exfiltration.'
     },
     'Web Attack': {
         'cve': 'CVE-2022-22965',
         'name': 'Spring4Shell',
         'severity': 9.8,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
-        'description': 'RCE in Spring Framework via data binding, targeting web-facing applications.'
-        'action: Block the source IP via WAF and firewall rules. Review web server logs for signs of webshell deployment or unauthorized file writes. '
+        'description': 'RCE in Spring Framework via data binding, targeting web-facing applications.',
+        'action': 'Block the source IP via WAF and firewall rules. Review web server logs for signs of webshell deployment or unauthorized file writes.'
     },
     'Bot': {
         'cve': 'CVE-2016-10372',
         'name': 'Mirai Variant',
         'severity': 7.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:H',
-        'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.'
-        'action: Change all default credentials on network-connected devices. Segment IoT devices onto an isolated VLAN. Block outbound traffic to known botnet C2 IP ranges and enable egress filtering. '
+        'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.',
+        'action': 'Change all default credentials on network-connected devices. Segment IoT devices onto an isolated VLAN. Block outbound traffic to known botnet C2 IP ranges and enable egress filtering.'
     },
     'FTP-Patator': {
         'cve': 'CVE-2025-49195',
         'name': 'FTP Brute Force (CWE-307)',
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
-        'description': 'Automated authentication attacks against the File Transfer Protocol (FTP). Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) due to a lack of login rate-limiting.'
-        'action: Block the source IP and implement FTP login rate-limiting. Enforce strong password policies on all FTP accounts and review transfer logs for any successful unauthorized access.'
+        'description': 'Automated authentication attacks against the File Transfer Protocol (FTP). Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) due to a lack of login rate-limiting.',
+        'action': 'Block the source IP and implement FTP login rate-limiting. Enforce strong password policies on all FTP accounts and review transfer logs for any successful unauthorized access.'
     },
     'SSH-Patator': {
         'cve': 'CVE-2020-1616',
         'name': 'SSH Brute Force (CWE-307)',
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
-        'description': 'Automated authentication attacks against the Secure Shell protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) to gain unauthorized shell access.'
-        'action: Block the source IP. Disable SSH password authentication and enforce key-based login only. Restrict SSH access to known IPs via allowlist and audit auth.log for any successful sessions from the attacker. '
+        'description': 'Automated authentication attacks against the Secure Shell protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) to gain unauthorized shell access.',
+        'action': 'Block the source IP. Disable SSH password authentication and enforce key-based login only. Restrict SSH access to known IPs via allowlist and audit auth.log for any successful sessions from the attacker. '
     }
 }
 
