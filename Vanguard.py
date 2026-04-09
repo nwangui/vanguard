@@ -7,9 +7,6 @@ import joblib
 import os
 import torch
 import torch.nn as nn
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from io import BytesIO
 
 # --- CVE MAPPING --- #
 CVE_INTEL_BASE = {
@@ -19,6 +16,7 @@ CVE_INTEL_BASE = {
         'severity': 7.5,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H',
         'description': 'Exploits a flaw in the HTTP/2 protocol stream cancellation to cause resource exhaustion.'
+        'action: Rate-limit or block the source IP immediately and update server software to patched versions.'
     },
     'PortScan': {
         'cve': 'CVE-2021-41773',
@@ -26,6 +24,7 @@ CVE_INTEL_BASE = {
         'severity': 3.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N',
         'description': 'Identifying active services. This is the precursor to an exploit like the Apache Path Traversal.'
+        'action: Audit and close all non-essential open ports. Enable port-scan detection on your IDS/IPS and treat this as a precursor.'
     },
     'Brute Force': {
         'cve': 'CVE-2020-3580',
@@ -33,6 +32,7 @@ CVE_INTEL_BASE = {
         'severity': 6.1,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N',
         'description': 'Attempting unauthorized access via credential stuffing on administrative interfaces.'
+        'action: Temporarily block the offending IP. Enforce account lockout after 5 failed attempts. Mandate MFA on all administrative interfaces.'
     },
     'Infiltration': {
         'cve': 'CVE-2021-44228',
@@ -40,6 +40,7 @@ CVE_INTEL_BASE = {
         'severity': 10.0,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H',
         'description': 'Critical Remote Code Execution (RCE) via Log4j. Highly pervasive infiltration risk.'
+        'action: Isolate the affected host from the network immediately. Conduct a full forensic audit of the host for persistence mechanisms and data exfiltration.'
     },
     'Web Attack': {
         'cve': 'CVE-2022-22965',
@@ -47,20 +48,23 @@ CVE_INTEL_BASE = {
         'severity': 9.8,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
         'description': 'RCE in Spring Framework via data binding, targeting web-facing applications.'
+        'action: Block the source IP via WAF and firewall rules. Review web server logs for signs of webshell deployment or unauthorized file writes. '
     },
-    'Botnet': {
+    'Bot': {
         'cve': 'CVE-2016-10372',
         'name': 'Mirai Variant',
         'severity': 7.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:H',
         'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.'
+        'action: Change all default credentials on network-connected devices. Segment IoT devices onto an isolated VLAN. Block outbound traffic to known botnet C2 IP ranges and enable egress filtering. '
     },
     'FTP-Patator': {
         'cve': 'CVE-2025-49195',
         'name': 'FTP Brute Force (CWE-307)',
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
-        'description': 'Automated authentication attacks against the File Transfer Protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) due to a lack of login rate-limiting.'
+        'description': 'Automated authentication attacks against the File Transfer Protocol (FTP). Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) due to a lack of login rate-limiting.'
+        'action: Block the source IP and implement FTP login rate-limiting. Enforce strong password policies on all FTP accounts and review transfer logs for any successful unauthorized access.'
     },
     'SSH-Patator': {
         'cve': 'CVE-2020-1616',
@@ -68,6 +72,7 @@ CVE_INTEL_BASE = {
         'severity': 5.3,
         'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N',
         'description': 'Automated authentication attacks against the Secure Shell protocol. Exploits CWE-307 (Improper Restriction of Excessive Authentication Attempts) to gain unauthorized shell access.'
+        'action: Block the source IP. Disable SSH password authentication and enforce key-based login only. Restrict SSH access to known IPs via allowlist and audit auth.log for any successful sessions from the attacker. '
     }
 }
 
@@ -88,7 +93,7 @@ st.markdown("""
     <div style="background-color:#0e1117; padding:20px; border-radius:10px; border: 1px solid #30363d; border-left: 5px solid #ffffff;">
         <h2 style="color:#ffffff; margin-top:0; font-family: sans-serif;">🛡️ Vanguard: AI-Intrusion Detection System</h2>
         <p style="color:#ffffff; font-size:15px; line-height:1.6;">
-            A forensic intelligence tool that utilizes dual-engine machine learning to bridge the gap between automated detection and human triage 
+            A forensic intelligence tool that utilizes a machine learning engine to bridge the gap between automated detection and human triage 
             by mapping real-time behavioral anomalies to standardized CVSS 3.1 intelligence and MITRE CVE references.
         </p>
         <div style="display: flex; gap: 15px; font-family: monospace; font-size: 11px; margin-top: 10px;">
@@ -106,7 +111,7 @@ class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
         super(IDSNetwork, self).__init__()
         self.fc1 = nn.Linear(input_dim, 64)
-        self.dropout = nn.Dropout(0.6)  # Increased to 0.6 for better generalization
+        self.dropout = nn.Dropout(0.3)  #Randomly shuts off 30% of neurons during training to prevent overfitting
         self.fc2 = nn.Linear(64, 32)
         self.output = nn.Linear(32, num_classes)
         self.relu = nn.ReLU()
@@ -141,11 +146,11 @@ def load_vanguard_assets():
         model = joblib.load('models/vanguard_model.pkl')
         is_pytorch = False
     else:
-        input_dim = 78
+        input_dim = scaler.n_features_in_
         num_classes = len(le.classes_)
         model = IDSNetwork(input_dim, num_classes)
         # Load weights into the architecture
-        model.load_state_dict(torch.load('models/vanguard_model.pth', map_location=torch.device('cpu')))
+        model.load_state_dict(torch.load('models/vanguard_model.pth', map_location=torch.device('cpu'), weights_only=True))
         model.eval()
         is_pytorch = True
 
@@ -187,6 +192,10 @@ if uploaded_file is not None:
             # Forensic Cleaning (Handles Inf/NaN common in PCAP-to-CSV)
             X_input.replace([np.inf, -np.inf], np.nan, inplace=True)
             X_input.fillna(0, inplace=True)
+
+            # Aligns uploaded CSV columns to what the scaler expects
+            expected_cols = scaler.feature_names_in_
+            X_input = X_input.reindex(columns=expected_cols, fill_value=0)
 
             # Scale Data
             X_scaled = scaler.transform(X_input)
@@ -278,7 +287,7 @@ if st.session_state.analysis_results is not None:
         'SSH-Patator': "a repetitive attempt to gain remote control over our servers"
     }
 
-    if st.button("📝 Generate Executive Summary (Non-Technical)"):
+    with st.expander("📝 View Non-Technical Executive Summary"):
         malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
         total_alerts = len(malicious_df)
 

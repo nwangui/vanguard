@@ -1,7 +1,6 @@
-# ------- VANGUARD IDS: PYTORCH & RF DUAL-ENGINE TRAINING (AUC-ROC BASED) --------#
+# ------- VANGUARD IDS: PYTORCH & RANDOM FOREST DUAL-ENGINE TRAINING (AUC-ROC BASED) --------#
 
 import os
-from turtle import st
 import pandas as pd
 import numpy as np
 import zipfile
@@ -21,6 +20,7 @@ import matplotlib.pyplot as plt
 print("🛡️ Vanguard IDS: Initializing Forensic Training Engine...")
 
 # --- THREAT INTELLIGENCE MAPPING ---#
+# Maps the abstract dataset labels to real-world forensic vulnerabilities (CVEs)
 CVE_INTEL_MAP = {
     'DoS': 'CVE-2023-44487 (HTTP/2 Rapid Reset)',
     'PortScan': 'Reconnaissance / Network Enumeration',
@@ -38,8 +38,7 @@ def load_and_merge_zip(zip_path):
     with zipfile.ZipFile(zip_path, 'r') as z:
         csv_files = [f for f in z.namelist() if f.endswith('.csv') and not f.startswith('__')]
         if not csv_files:
-            st.warning("⚠️ The ZIP file contains no valid .csv network traffic logs.")
-            return None
+            raise ValueError("⚠️ The ZIP file contains no valid .csv network traffic logs.")
         for file_name in csv_files:
             print(f"Reading: {file_name}")
             with z.open(file_name) as f:
@@ -47,25 +46,27 @@ def load_and_merge_zip(zip_path):
     return pd.concat(all_df, ignore_index=True)
 
 df = load_and_merge_zip('MachineLearningCSV.zip')
-df.columns = df.columns.str.strip()
-df.replace([np.inf, -np.inf], np.nan, inplace=True)
-df.dropna(inplace=True)
+df = df.loc[:, ~df.columns.duplicated()] #Remove duplicate columns if any files had overlapping headers
+df.columns = df.columns.str.strip() #Removes leading/trailing spaces in column names
+df.replace([np.inf, -np.inf], np.nan, inplace=True) #Replaces infinite values with NaN
+df.dropna(inplace=True) #Removes rows with missing or infinite data to prevent model errors
 
 le = LabelEncoder()
-df['Label'] = le.fit_transform(df['Label'])
+df['Label'] = le.fit_transform(df['Label']) #Converts text labels into numbers
 
 X = df.drop('Label', axis=1)
 y = df['Label']
 
-# Sampling 50% for performance stability
+# Sampling 50% ensures the model trains quickly while maintaining attack distribution
 X_sample, _, y_sample, _ = train_test_split(X, y, test_size=0.5, stratify=y, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(X_sample, y_sample, test_size=0.2, random_state=42)
 
+# Standardizing features which is crucial for Neural Network convergence
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Convert to PyTorch Tensors
+# Convert to PyTorch Tensors to allow the model to perform backpropagation
 X_train_tensor = torch.tensor(X_train_scaled, dtype=torch.float32)
 y_train_tensor = torch.tensor(y_train.values, dtype=torch.long)
 X_test_tensor = torch.tensor(X_test_scaled, dtype=torch.float32)
@@ -75,14 +76,15 @@ y_test_tensor = torch.tensor(y_test.values, dtype=torch.long)
 train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_size=64, shuffle=True)
 
 # --- PYTORCH NEURAL NETWORK --- #
+print(f"\n🏆 Training PyTorch Baseline...")
 class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
         super(IDSNetwork, self).__init__()
         self.fc1 = nn.Linear(input_dim, 64)
-        self.dropout = nn.Dropout(0.6) # High dropout for generalization
+        self.dropout = nn.Dropout(0.3) #Randomly shuts off 30% of neurons during training to prevent overfitting
         self.fc2 = nn.Linear(64, 32)
         self.output = nn.Linear(32, num_classes)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU() #Activation function to help the model learn non-linear patterns
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
@@ -90,12 +92,14 @@ class IDSNetwork(nn.Module):
         x = self.relu(self.fc2(x))
         return self.output(x)
 
-input_dim = X_train_scaled.shape[1]
+input_dim = scaler.n_features_in_
 num_classes = len(le.classes_)
 pytorch_model = IDSNetwork(input_dim, num_classes)
 
 # PyTorch Training Loop
+#CrossEntropyLoss is standard for multi-class classification
 criterion = nn.CrossEntropyLoss()
+#Adam optimizer adaptively adjusts learning rates
 optimizer = optim.Adam(pytorch_model.parameters(), lr=0.001)
 epochs = 5
 pytorch_model.train()
@@ -117,8 +121,11 @@ with torch.no_grad():
     pytorch_probs = torch.softmax(logits, dim=1).numpy()
     pytorch_preds = np.argmax(pytorch_probs, axis=1)
 
+#Converts labels to a binary format (0/1) for each class to calculate ROC
 y_test_binarized = label_binarize(y_test, classes=range(num_classes))
-pytorch_auc = roc_auc_score(y_test_binarized, pytorch_probs, multi_class='ovr', average='macro')
+
+#roc_auc_score: Measures the 'Area Under the Curve'. 1.0 is perfect; 0.5 is a random guess.
+pytorch_auc = roc_auc_score(y_test_binarized, pytorch_probs, multi_class='ovr', average='macro') #Macro average to ensure that the evaluation remains unbiased
 pytorch_acc = accuracy_score(y_test, pytorch_preds)
 
 print(f"\n🏆 PyTorch Metrics; Accuracy: {pytorch_acc:.4f} | AUC-ROC : {pytorch_auc:.4f}")
@@ -126,9 +133,18 @@ print("\n📋 PyTorch Classification Report:")
 print(classification_report(y_test, pytorch_preds, target_names=le.classes_, zero_division=0))
 
 
-# --- RANDOM FOREST ENSEMBLE --- #
-print("\n🌲 Training Random Forest Baseline (Balanced Weights)...")
-rf_model = RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42, class_weight='balanced')
+# --- RANDOM FOREST CLASSIFIER --- #
+print("\n🌲 Training Random Forest Baseline...")
+
+#class_weight='balanced': The model pays more attention to rare attacks
+rf_model = RandomForestClassifier(
+    n_estimators=100, #More trees for a more stable consensus
+    max_depth=15,     #Deep enough to see complex attack patterns
+    min_samples_split=5, #Prevents trees from becoming too specific resulting in anti-overfitting
+    random_state=42,
+    class_weight='balanced' #Critical for an imbalanced dataset
+)
+
 rf_model.fit(X_train_scaled, y_train)
 
 # Random Forest AUC-ROC Evaluation
@@ -150,9 +166,9 @@ benign_idx = list(le.classes_).index('BENIGN')
 def plot_engine_roc(y_test_bin, y_probs, le_classes, engine_name, file_name):
     plt.figure(figsize=(10, 6))
     for i in range(len(le_classes)):
-        if i == benign_idx: continue # Exclude Benign from Attack analysis
-        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_probs[:, i]) #Represents the percentage of false positive rate and true positive rate
-        roc_auc_val = auc(fpr, tpr)
+        if i == benign_idx: continue # Exclude Benign from attack analysis to focus the chart specifically on attack detection performance
+        fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_probs[:, i]) #Calculates False Positive Rate and True Positive Rate
+        roc_auc_val = auc(fpr, tpr) #Draws the curve for each attack category
         plt.plot(fpr, tpr, label=f'Attack: {le_classes[i]} (AUC = {roc_auc_val:.2f})')
 
     plt.plot([0, 1], [0, 1], 'k--', lw=1.5, label='Random Guess')

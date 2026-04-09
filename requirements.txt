@@ -5,4 +5,3 @@ joblib
 torch
 scikit-learn==1.8.0
 matplotlib
-seaborn
