@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 
 # --- CVE MAPPING --- #
+# A dictionary acting as a local threat database. Each key is an attack label and its value is another dictionary containing the CVE ID, severity score, CVSS vector, description, and action plan.
 CVE_INTEL_BASE = {
     'DoS': {
         'cve': 'CVE-2023-44487',
@@ -83,7 +84,7 @@ if 'analysis_results' not in st.session_state:
 
 
 # --- CLOUD OPTIMIZATION CHECK --- #
-IS_CLOUD = os.environ.get('RENDER') == 'true'
+IS_CLOUD = os.environ.get('RENDER') == 'true' or 'STREAMLIT_SERVER_PORT' in os.environ
 MAX_ROWS = 5000 if IS_CLOUD else None
 
 # --- PAGE CONFIGURATION --- #
