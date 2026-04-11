@@ -84,7 +84,8 @@ if 'analysis_results' not in st.session_state:
 
 
 # --- CLOUD OPTIMIZATION CHECK --- #
-IS_CLOUD = os.environ.get('RENDER') == 'true' or 'STREAMLIT_SERVER_PORT' in os.environ
+# Detects if the app is running on Streamlit's cloud servers
+IS_CLOUD = 'STREAMLIT_SERVER_PORT' in os.environ
 MAX_ROWS = 5000 if IS_CLOUD else None
 
 # --- PAGE CONFIGURATION --- #
