@@ -53,11 +53,11 @@ CVE_INTEL_BASE = {
     },
     'Bot': {
         'cve': 'CVE-2016-10372',
-        'name': 'Mirai Variant',
-        'severity': 7.3,
-        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:H',
-        'description': 'Infecting IoT devices to facilitate large-scale DDoS attacks.',
-        'action': 'Change all default credentials on network-connected devices. Segment IoT devices onto an isolated VLAN. Block outbound traffic to known botnet C2 IP ranges and enable egress filtering.'
+        'name': 'Mirai IoT Botnet (RCE)',
+        'severity': 9.8,
+        'vector': 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
+        'description': 'Remote Code Execution (RCE) in Realtek-based IoT devices. This allowed the Mirai botnet to rapidly recruit "zombie" devices for large-scale DDoS attacks.',
+        'action': 'Disconnect the infected IoT device from the production VLAN and check for outbound C2 (Command & Control) traffic.'
     },
     'FTP-Patator': {
         'cve': 'CVE-2025-49195',
