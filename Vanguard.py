@@ -91,7 +91,7 @@ MAX_ROWS = 5000 if IS_CLOUD else None
 st.set_page_config(page_title="Vanguard IDS", page_icon="🛡️", layout="wide")
 
 st.markdown("""
-    <div style="background-color:#85b0ff; padding:20px; border-radius:10px; border: 1px solid #abb2ba; border-left: 5px solid #ffffff;">
+    <div style="background-color:#043794; padding:20px; border-radius:10px; border: 1px solid #abb2ba; border-left: 5px solid #ffffff;">
         <h2 style="color:#ffffff; margin-top:0; font-family: sans-serif;">🛡️ Vanguard: AI-Intrusion Detection System</h2>
         <p style="color:#ffffff; font-size:15px; line-height:1.6;">
             A forensic intelligence tool that utilizes a machine learning engine to bridge the gap between automated detection and human triage 
