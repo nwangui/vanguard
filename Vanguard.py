@@ -99,7 +99,7 @@ st.markdown("""
         </p>
         <div style="display: flex; gap: 15px; font-family: monospace; font-size: 11px; margin-top: 10px;">
             <span style="color:#3fb950; background-color:rgba(63,185,80,0.1); padding:2px 8px; border-radius:5px;">● SYSTEM ONLINE</span>
-            <span style="color:#96c7ff; background-color:rgba(88,166,255,0.1); padding:2px 8px; border-radius:5px;">● CVSS v3.1 MAPPING</span>
+            <span style="color:#ffffa8; background-color:rgba(88,166,255,0.1); padding:2px 8px; border-radius:5px;">● CVSS v3.1 MAPPING</span>
         </div>
     </div>
     <br>
