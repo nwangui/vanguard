@@ -51,8 +51,9 @@ df.columns = df.columns.str.strip() #Removes leading/trailing spaces in column n
 df.replace([np.inf, -np.inf], np.nan, inplace=True) #Replaces infinite values with NaN
 df.dropna(inplace=True) #Removes rows with missing or infinite data to prevent model errors
 
+#Converts text labels into numbers
 le = LabelEncoder()
-df['Label'] = le.fit_transform(df['Label']) #Converts text labels into numbers
+df['Label'] = le.fit_transform(df['Label'])
 
 X = df.drop('Label', axis=1)
 y = df['Label']
@@ -86,11 +87,13 @@ class IDSNetwork(nn.Module):
         self.output = nn.Linear(32, num_classes)
         self.relu = nn.ReLU() #Activation function to help the model learn non-linear patterns
 
+    # This is the path data takes through the network: input → layer 1 → activation → dropout → layer 2 → activation → output scores
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.relu(self.fc2(x))
         return self.output(x)
+
 
 input_dim = scaler.n_features_in_
 num_classes = len(le.classes_)
@@ -121,10 +124,10 @@ with torch.no_grad():
     pytorch_probs = torch.softmax(logits, dim=1).numpy()
     pytorch_preds = np.argmax(pytorch_probs, axis=1)
 
-#Converts labels to a binary format (0/1) for each class to calculate ROC
+# Converts labels to a binary format (0/1) for each class to calculate ROC
 y_test_binarized = label_binarize(y_test, classes=range(num_classes))
 
-#roc_auc_score: Measures the 'Area Under the Curve'. 1.0 is perfect; 0.5 is a random guess.
+# AUC-ROC score: Measures the Area Under the Curve (AUC); 1.0 is perfect; 0.5 is a random guess.
 pytorch_auc = roc_auc_score(y_test_binarized, pytorch_probs, multi_class='ovr', average='macro') #Macro average to ensure that the evaluation remains unbiased
 pytorch_acc = accuracy_score(y_test, pytorch_preds)
 
@@ -147,13 +150,13 @@ rf_model = RandomForestClassifier(
 
 rf_model.fit(X_train_scaled, y_train)
 
-# Random Forest AUC-ROC Evaluation
+# Random Forest ROC-AUC Evaluation
 rf_probs = rf_model.predict_proba(X_test_scaled)
 rf_preds = rf_model.predict(X_test_scaled)
 rf_auc = roc_auc_score(y_test_binarized, rf_probs, multi_class='ovr', average='macro')
 rf_acc = accuracy_score(y_test, rf_preds)
 
-print(f"📊 RF Metrics -> Accuracy: {rf_acc:.4f} | AUC-ROC (Macro): {rf_auc:.4f}")
+print(f"📊 RF Metrics -> Accuracy: {rf_acc:.4f} | AUC-ROC : {rf_auc:.4f}")
 print("\n📋 Random Forest Classification Report:")
 print(classification_report(y_test, rf_preds, target_names=le.classes_, zero_division=0))
 

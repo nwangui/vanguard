@@ -115,8 +115,9 @@ class IDSNetwork(nn.Module):
         self.dropout = nn.Dropout(0.3)  #Randomly shuts off 30% of neurons during training to prevent overfitting
         self.fc2 = nn.Linear(64, 32)
         self.output = nn.Linear(32, num_classes)
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU() #Activation function to help the model learn non-linear patterns
 
+    # This is the path data takes through the network: input → layer 1 → activation → dropout → layer 2 → activation → output scores
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
@@ -131,7 +132,7 @@ def load_vanguard_assets():
     encoder_path = 'models/label_encoder.pkl'
     active_model_info = 'models/active_model_type.txt'
 
-    # Load Universal Preprocessing Assets
+    # Loads StandardScaler and LabelEncoder
     scaler = joblib.load(scaler_path)
     le = joblib.load(encoder_path)
 
@@ -142,12 +143,12 @@ def load_vanguard_assets():
     else:
         model_type = 'pytorch'  # Default fallback
 
-    # Load the "Underdog" Winner
+    # Load the engine with the best AUC-ROC
     if model_type == 'sklearn':
         model = joblib.load('models/vanguard_model.pkl')
         is_pytorch = False
     else:
-        input_dim = scaler.n_features_in_
+        input_dim = scaler.n_features_in_ #Reads the number of features the scaler was trained on
         num_classes = len(le.classes_)
         model = IDSNetwork(input_dim, num_classes)
         # Load weights into the architecture
@@ -174,7 +175,7 @@ uploaded_file = st.sidebar.file_uploader("Upload Network CSV (CIC-IDS2017)", typ
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.strip() #Removes leading/trailing spaces in column names
 
     # Optimization for Cloud Deployment
     if IS_CLOUD and len(df) > MAX_ROWS:
@@ -186,19 +187,18 @@ if uploaded_file is not None:
 
     if st.button("🔍 Run Forensic Analysis"):
         with st.spinner("Analyzing traffic patterns..."):
-            # Feature Extraction
-            X_input = df.drop(columns=['Label'], errors='ignore')
+            X_input = df.drop(columns=['Label'], errors='ignore') #Removes the label column if it exists and ignores the column isn't there.
             X_input = X_input.select_dtypes(include=[np.number])
 
-            # Forensic Cleaning (Handles Inf/NaN common in PCAP-to-CSV)
+            # Infinite values are replaced with NaN and then filled with 0 so they don't cause errors.
             X_input.replace([np.inf, -np.inf], np.nan, inplace=True)
             X_input.fillna(0, inplace=True)
 
-            # Aligns uploaded CSV columns to what the scaler expects
+            # Aligns uploaded CSV columns to the scaler
             expected_cols = scaler.feature_names_in_
             X_input = X_input.reindex(columns=expected_cols, fill_value=0)
 
-            # Scale Data
+            #Normalises the data using the same scale learned during training
             X_scaled = scaler.transform(X_input)
 
             # Perform Inference
@@ -206,11 +206,11 @@ if uploaded_file is not None:
                 input_tensor = torch.tensor(X_scaled, dtype=torch.float32)
                 with torch.no_grad():
                     logits = model(input_tensor)
-                    predictions = torch.argmax(logits, dim=1).numpy()
+                    predictions = torch.argmax(logits, dim=1).numpy() #For each row, picks the class with the highest output score as the prediction and converts it from a PyTorch tensor to a NumPy array depending on the engine selected
             else:
                 predictions = model.predict(X_scaled)
 
-            # Map Results
+            #Converts the numeric predictions back into text
             df['Threat_Type'] = le.inverse_transform(predictions)
 
             # Session State Save
@@ -226,13 +226,13 @@ if st.session_state.analysis_results is not None:
 
     with col1:
         st.write("#### Incident Summary")
-        st.write(res_df['Threat_Type'].value_counts())
+        st.write(res_df['Threat_Type'].value_counts()) #Counts how many times each threat label appears in the results
 
     with col2:
         st.write("#### Malicious Traffic Distribution")
 
         # Filter for attacks
-        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN']
+        malicious_df = res_df[res_df['Threat_Type'] != 'BENIGN'] #Filters out normal traffic and displays only rows classified as attacks for the charts and analysis
 
         # Get counts and transform into a DataFrame - .reset_index() turns the Threat Names into a real column
         attack_counts = malicious_df['Threat_Type'].value_counts().reset_index()
@@ -240,7 +240,7 @@ if st.session_state.analysis_results is not None:
         # Explicitly name the columns for the chart to reference
         attack_counts.columns = ['Threat Type', 'Count']
 
-        # 4. Check if the dataframe is not empty
+        # Checks if the dataframe is not empty
         if not attack_counts.empty:
             # We pass 'x' and 'y' using the new column names
             st.bar_chart(data=attack_counts, x='Threat Type', y='Count', color='#2162db')
@@ -276,7 +276,7 @@ if st.session_state.analysis_results is not None:
 
     # --- Executive Summary ---#
     st.markdown("---")
-    # --- Non-Technical Risk Translator---#
+    # Non-Technical Risk Translator
     RISK_TRANSLATOR = {
         'DoS': "an attempt to overwhelm our services and knock the system offline",
         'Infiltration': "a digital break-in where an attacker is trying to gain internal access to sensitive files",
@@ -306,7 +306,7 @@ if st.session_state.analysis_results is not None:
                           delta="Critical" if max_severity > 8 else "High", delta_color="inverse")
             col_m2.metric("Total Anomalies", total_alerts)
 
-            # Get translation for the highest risk threat
+
             risk_explanation = RISK_TRANSLATOR.get(top_threat, f"unusual activity")
 
             st.write(f"""
