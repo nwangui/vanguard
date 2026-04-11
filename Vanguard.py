@@ -51,7 +51,7 @@ CVE_INTEL_BASE = {
         'description': 'RCE in Spring Framework via data binding, targeting web-facing applications.',
         'action': 'Block the source IP via WAF and firewall rules. Review web server logs for signs of webshell deployment or unauthorized file writes.'
     },
-    'Bot': {
+    'Botnet': {
         'cve': 'CVE-2016-10372',
         'name': 'Mirai Variant',
         'severity': 7.3,
