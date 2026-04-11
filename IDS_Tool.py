@@ -27,7 +27,7 @@ CVE_INTEL_MAP = {
     'Brute Force': 'CVE-2020-3580 (Cisco ASA Auth Bypass)',
     'Infiltration': 'CVE-2021-44228 (Log4Shell RCE)',
     'Web Attack': 'CVE-2022-22965 (Spring4Shell)',
-    'Botnet': 'CVE-2016-10372 (Mirai Variant)',
+    'Bot': 'CVE-2016-10372 (Mirai Variant)',
     'FTP-Patator': 'Protocol Brute Force (FTP)',
     'SSH-Patator': 'Protocol Brute Force (SSH)'
 }
