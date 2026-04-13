@@ -1,4 +1,4 @@
-#----- USER INTERFACE ON STREAMLIT THROUGH GITHUB -----#
+#----- USER INTERFACE ON STREAMLIT -----#
 
 import streamlit as st
 import pandas as pd
@@ -77,7 +77,7 @@ CVE_INTEL_BASE = {
     }
 }
 
-# --- SESSION STATE INITIALIZATION ---#
+# --- SESSION STATE INITIALIZATION --- #
 # This must be near the top to ensure the "Vault" exists before the app runs
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
@@ -107,8 +107,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 
-# --- PYTORCH ARCHITECTURE ---#
-# Matches the IDS_Tool.py changes (Dropout 0.6)
+# --- PYTORCH ARCHITECTURE --- #
 class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
         super(IDSNetwork, self).__init__()
@@ -170,7 +169,7 @@ with st.spinner("Vanguard is initializing the Detection Engine..."):
         st.stop()
 
 
-# --- DATA INGESTION ---#
+# --- DATA INGESTION --- #
 st.sidebar.header("Upload Traffic Data")
 uploaded_file = st.sidebar.file_uploader("Upload Network CSV (CIC-IDS2017)", type="csv")
 
@@ -199,7 +198,7 @@ if uploaded_file is not None:
             expected_cols = scaler.feature_names_in_
             X_input = X_input.reindex(columns=expected_cols, fill_value=0)
 
-            #Normalises the data using the same scale learned during training
+            # Normalises the data using the same scale learned during training
             X_scaled = scaler.transform(X_input)
 
             # Perform Inference
@@ -275,7 +274,7 @@ if st.session_state.analysis_results is not None:
         else:
             st.info("Awaiting threat data for risk visualization.")
 
-    # --- Executive Summary ---#
+    # --- EXECUTIVE SUMMARY --- #
     st.markdown("---")
     # Non-Technical Risk Translator
     RISK_TRANSLATOR = {
@@ -327,7 +326,7 @@ if st.session_state.analysis_results is not None:
             **Conclusion:** All network behavior aligns with the secure baseline. No suspicious login attempts, break-ins, or service disruptions were detected. No further action is required from management at this time.
             """)
 
-    # Alerting Logic
+    # --- ALERTING LOGIC --- #
     st.markdown("---")
     st.write("### 💡Threat Intelligence (CVE Mapping)")
 
@@ -373,6 +372,6 @@ if st.session_state.analysis_results is not None:
 else:
     st.info("Awaiting input: Upload a network traffic CSV file to begin analysis.")
 
-# --- DISSERTATION FOOTER ---#
+# --- DISSERTATION FOOTER --- #
 st.markdown("---")
 st.caption(" Intrusion Detection System Framework | Developed by Nicole Wangui Mbau | MSc Cybersecurity & Emerging Threats | Middlesex University Dubai")
