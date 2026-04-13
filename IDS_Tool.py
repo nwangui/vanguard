@@ -158,7 +158,7 @@ rf_preds = rf_model.predict(X_test_scaled)
 rf_auc = roc_auc_score(y_test_binarized, rf_probs, multi_class='ovr', average='macro')
 rf_acc = accuracy_score(y_test, rf_preds)
 
-print(f"📊 RF Metrics -> Accuracy: {rf_acc:.4f} | AUC-ROC : {rf_auc:.4f}")
+print(f"🌲 RF Metrics -> Accuracy: {rf_acc:.4f} | AUC-ROC : {rf_auc:.4f}")
 print("\n📋 Random Forest Classification Report:")
 print(classification_report(y_test, rf_preds, target_names=le.classes_, zero_division=0))
 
