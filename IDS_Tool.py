@@ -87,7 +87,8 @@ class IDSNetwork(nn.Module):
         self.output = nn.Linear(32, num_classes)
         self.relu = nn.ReLU() #Activation function to help the model learn non-linear patterns
 
-    # This is the path data takes through the network: input → layer 1 → activation → dropout → layer 2 → activation → output scores
+    # This is the path data takes through the network:
+    # input → layer 1 → activation → dropout → layer 2 → activation → output scores
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
@@ -127,8 +128,9 @@ with torch.no_grad():
 # Converts labels to a binary format (0/1) for each class to calculate ROC
 y_test_binarized = label_binarize(y_test, classes=range(num_classes))
 
-# AUC-ROC score: Measures the Area Under the Curve (AUC); 1.0 is perfect; 0.5 is a random guess.
-pytorch_auc = roc_auc_score(y_test_binarized, pytorch_probs, multi_class='ovr', average='macro') #Macro average to ensure that the evaluation remains unbiased
+# AUC-ROC score: Measures the Area Under the Curve (AUC)
+# Macro average to ensure that the evaluation remains unbiased
+pytorch_auc = roc_auc_score(y_test_binarized, pytorch_probs, multi_class='ovr', average='macro')
 pytorch_acc = accuracy_score(y_test, pytorch_preds)
 
 print(f"\n🏆 PyTorch Metrics; Accuracy: {pytorch_acc:.4f} | AUC-ROC : {pytorch_auc:.4f}")
@@ -169,7 +171,7 @@ benign_idx = list(le.classes_).index('BENIGN')
 def plot_engine_roc(y_test_bin, y_probs, le_classes, engine_name, file_name):
     plt.figure(figsize=(10, 6))
     for i in range(len(le_classes)):
-        if i == benign_idx: continue # Exclude Benign from attack analysis to focus the chart specifically on attack detection performance
+        if i == benign_idx: continue #Exclude Benign from attack analysis to focus specifically on attack detection
         fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_probs[:, i]) #Calculates False Positive Rate and True Positive Rate
         roc_auc_val = auc(fpr, tpr) #Draws the curve for each attack category
         plt.plot(fpr, tpr, label=f'Attack: {le_classes[i]} (AUC = {roc_auc_val:.2f})')
