@@ -198,7 +198,7 @@ if not os.path.exists('models'): os.makedirs('models')
 
 # AUC-ROC Comparison
 print(f"\n📊 FINAL FORENSIC COMPARISON:")
-print(f"🛡️ PyTorch AUC-ROC: {pytorch_auc:.4f}")
+print(f"🏆️ PyTorch AUC-ROC: {pytorch_auc:.4f}")
 print(f"🌲 Random Forest AUC-ROC: {rf_auc:.4f}")
 
 # Engine Selection Logic
