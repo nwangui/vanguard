@@ -47,7 +47,7 @@ def load_and_merge_zip(zip_path):
 
 df = load_and_merge_zip('MachineLearningCSV.zip')
 df = df.loc[:, ~df.columns.duplicated()] #Remove duplicate columns if any files had overlapping headers
-df.columns = df.columns.str.strip() #Removes leading/trailing spaces in column names
+df.columns = df.columns.str.strip() #Removes trailing spaces in column names
 df.replace([np.inf, -np.inf], np.nan, inplace=True) #Replaces infinite values with NaN
 df.dropna(inplace=True) #Removes rows with missing or infinite data to prevent model errors
 
@@ -62,6 +62,7 @@ y = df['Label']
 X_sample, _, y_sample, _ = train_test_split(X, y, test_size=0.5, stratify=y, random_state=42)
 X_train, X_test, y_train, y_test = train_test_split(X_sample, y_sample, test_size=0.2, random_state=42)
 
+# --- PYTORCH NEURAL NETWORK --- #
 # Standardizing features which is crucial for Neural Network convergence
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -76,7 +77,6 @@ y_test_tensor = torch.tensor(y_test.values, dtype=torch.long)
 # Create DataLoader for Batch Training
 train_loader = DataLoader(TensorDataset(X_train_tensor, y_train_tensor), batch_size=64, shuffle=True)
 
-# --- PYTORCH NEURAL NETWORK --- #
 print(f"\n🏆 Training PyTorch Baseline...")
 class IDSNetwork(nn.Module):
     def __init__(self, input_dim, num_classes):
