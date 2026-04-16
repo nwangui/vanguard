@@ -9,7 +9,8 @@ import torch
 import torch.nn as nn
 
 # --- CVE MAPPING --- #
-# A dictionary acting as a local threat database. Each key is an attack label and its value is another dictionary containing the CVE ID, severity score, CVSS vector, description, and action plan.
+# A dictionary acting as a local threat database.
+# Each key is an attack label and its value is another dictionary containing the CVE ID, severity score, CVSS vector, description, and action plan.
 CVE_INTEL_BASE = {
     'DoS': {
         'cve': 'CVE-2023-44487',
