@@ -145,7 +145,6 @@ print("\n🌲 Training Random Forest Baseline...")
 rf_model = RandomForestClassifier(
     n_estimators=100, #More trees for a more stable consensus
     max_depth=15,     #Deep enough to see complex attack patterns
-    min_samples_split=5, #Prevents trees from becoming too specific resulting in anti-overfitting
     random_state=42,
     class_weight='balanced' #Critical for an imbalanced dataset
 )
